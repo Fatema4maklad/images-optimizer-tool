@@ -11,14 +11,14 @@ For an input name such as `Al Riyadh Company`, the tool creates:
 output/
 +-- al-riyadh-company/
     +-- ramworld-al-riyadh-company-logo.png
-    +-- ramworld-al-riyadh-company-cover.jpg
-    +-- ramworld-al-riyadh-company-gallery-01.jpg
-    +-- ramworld-al-riyadh-company-gallery-02.jpg
+    +-- ramworld-al-riyadh-company-cover.webp
+    +-- ramworld-al-riyadh-company-gallery-01.webp
+    +-- ramworld-al-riyadh-company-gallery-02.webp
     +-- ramworld-al-riyadh-company-image-seo.csv
 ```
 
 Arabic names stay in Arabic. For `منتدى الرياض الاقتصادي`, the cover is named
-`ramworld-منتدى-الرياض-الاقتصادي-cover.jpg` and is placed in the folder
+`ramworld-منتدى-الرياض-الاقتصادي-cover.webp` and is placed in the folder
 `منتدى-الرياض-الاقتصادي`.
 
 ## Workflow
@@ -29,19 +29,23 @@ Arabic names stay in Arabic. For `منتدى الرياض الاقتصادي`, t
 4. Optimize and save every image in the entity's single output folder.
 
 The entered name is used for the cover filename. For example, the cover for
-`Riyadh Tech Summit` is saved as `ramworld-riyadh-tech-summit-cover.jpg`.
+`Riyadh Tech Summit` is saved as `ramworld-riyadh-tech-summit-cover.webp`.
 
 ## Default image limits
 
 | Type | Maximum dimensions | Default quality |
 | --- | --- | --- |
 | Logo | 1200 x 1200 | 95 |
-| Cover | 1920 x 1080 | 90 |
-| Gallery | 1920 x 1920 | 90 |
+| Cover | 1920 x 1080 | 88 |
+| Gallery | 1920 x 1920 | 88 |
 
 Images keep their aspect ratio and are never enlarged. PNG optimization is
 lossless, logo transparency is preserved, and an already optimized image is
 kept unchanged when re-encoding would make it larger.
+
+Covers and gallery photos are converted to high-quality WebP for smaller web
+downloads. Logos retain their uploaded format so transparent PNG branding is
+not unnecessarily converted.
 
 ## Run the application
 

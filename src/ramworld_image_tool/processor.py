@@ -32,8 +32,8 @@ class OptimizationSettings:
 
 DEFAULT_SETTINGS = {
     ImageKind.LOGO: OptimizationSettings(1200, 1200, 95),
-    ImageKind.COVER: OptimizationSettings(1920, 1080, 90),
-    ImageKind.GALLERY: OptimizationSettings(1920, 1920, 90),
+    ImageKind.COVER: OptimizationSettings(1920, 1080, 88),
+    ImageKind.GALLERY: OptimizationSettings(1920, 1920, 88),
 }
 
 
@@ -82,6 +82,11 @@ def _encode_image(
                 image = image.convert("RGB")
         save_options.update(quality=quality, optimize=True, progressive=True)
     elif image_format == "WEBP":
+        if image.mode not in {"RGB", "RGBA"}:
+            has_transparency = (
+                "A" in image.getbands() or "transparency" in image.info
+            )
+            image = image.convert("RGBA" if has_transparency else "RGB")
         save_options.update(
             quality=quality,
             method=6,
@@ -116,6 +121,9 @@ def optimize_image_bytes(
                 raise ValueError("Animated images are not supported.")
 
             original_size = source.size
+            target_format = (
+                image_format if image_kind is ImageKind.LOGO else "WEBP"
+            )
             exif_orientation = source.getexif().get(274, 1)
             icc_profile = source.info.get("icc_profile")
             optimized = ImageOps.exif_transpose(source)
@@ -127,7 +135,7 @@ def optimize_image_bytes(
             output_size = optimized.size
             encoded = _encode_image(
                 optimized,
-                image_format,
+                target_format,
                 image_kind,
                 selected_settings.quality,
                 icc_profile,
@@ -137,13 +145,19 @@ def optimize_image_bytes(
 
     was_resized = output_size != oriented_size
     was_rotated = exif_orientation != 1
-    if not was_resized and not was_rotated and len(encoded) >= len(image_data):
+    format_changed = target_format != image_format
+    if (
+        not format_changed
+        and not was_resized
+        and not was_rotated
+        and len(encoded) >= len(image_data)
+    ):
         encoded = image_data
 
     filename = build_filename(
         entity_name,
         image_kind,
-        SUPPORTED_FORMATS[image_format],
+        SUPPORTED_FORMATS[target_format],
         gallery_index,
     )
     return filename, encoded, original_size, output_size

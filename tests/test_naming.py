@@ -20,8 +20,8 @@ def test_slugify_name_preserves_arabic() -> None:
 
 def test_arabic_cover_filename() -> None:
     assert (
-        build_filename("منتدى الرياض الاقتصادي", ImageKind.COVER, "jpg")
-        == "ramworld-منتدى-الرياض-الاقتصادي-cover.jpg"
+        build_filename("منتدى الرياض الاقتصادي", ImageKind.COVER, "webp")
+        == "ramworld-منتدى-الرياض-الاقتصادي-cover.webp"
     )
 
 
@@ -34,14 +34,14 @@ def test_build_logo_filename() -> None:
 
 def test_build_numbered_gallery_filename() -> None:
     assert (
-        build_filename("Al Riyadh Company", ImageKind.GALLERY, "jpg", 3)
-        == "ramworld-al-riyadh-company-gallery-03.jpg"
+        build_filename("Al Riyadh Company", ImageKind.GALLERY, "webp", 3)
+        == "ramworld-al-riyadh-company-gallery-03.webp"
     )
 
 
 def test_gallery_requires_positive_index() -> None:
     with pytest.raises(ValueError, match="starting at 1"):
-        build_filename("Al Riyadh Company", ImageKind.GALLERY, "jpg", 0)
+        build_filename("Al Riyadh Company", ImageKind.GALLERY, "webp", 0)
 
 
 def test_create_one_output_folder(tmp_path: Path) -> None:

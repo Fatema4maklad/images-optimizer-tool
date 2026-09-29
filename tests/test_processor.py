@@ -27,10 +27,11 @@ def test_cover_uses_event_name_and_is_resized() -> None:
         settings=OptimizationSettings(1200, 600),
     )
 
-    assert filename == "ramworld-riyadh-tech-summit-cover.jpg"
+    assert filename == "ramworld-riyadh-tech-summit-cover.webp"
     assert original_size == (2400, 1600)
     assert output_size == (900, 600)
-    assert output
+    with Image.open(BytesIO(output)) as result:
+        assert result.format == "WEBP"
 
 
 def test_png_logo_keeps_transparency() -> None:
@@ -68,9 +69,9 @@ def test_image_set_uses_one_folder_and_numbers_gallery(tmp_path: Path) -> None:
     assert output_folders == {tmp_path / "output" / "riyadh-tech-summit"}
     assert [result.output_path.name for result in results] == [
         "ramworld-riyadh-tech-summit-logo.png",
-        "ramworld-riyadh-tech-summit-cover.jpg",
-        "ramworld-riyadh-tech-summit-gallery-01.jpg",
-        "ramworld-riyadh-tech-summit-gallery-02.jpg",
+        "ramworld-riyadh-tech-summit-cover.webp",
+        "ramworld-riyadh-tech-summit-gallery-01.webp",
+        "ramworld-riyadh-tech-summit-gallery-02.webp",
     ]
 
 

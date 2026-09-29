@@ -254,7 +254,7 @@ if entity_name.strip():
     try:
         slug_preview = slugify_name(entity_name)
         st.caption(
-            f"Cover filename example: ramworld-{slug_preview}-cover.jpg"
+            f"Cover filename example: ramworld-{slug_preview}-cover.webp"
         )
     except ValueError:
         slug_preview = ""
@@ -306,6 +306,10 @@ gallery_files = st.file_uploader(
     help="Select one or several gallery photos.",
     on_change=reset_after_source_change,
     key=f"gallery_uploader_{st.session_state.gallery_uploader_version}",
+)
+st.caption(
+    "Covers and gallery photos are converted to high-quality WebP. "
+    "Logos keep their original format."
 )
 
 has_upload = bool(logo_file or cover_file or gallery_files)

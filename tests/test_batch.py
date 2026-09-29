@@ -36,8 +36,8 @@ def test_uploaded_batch_saves_one_folder_and_builds_zip(tmp_path: Path) -> None:
     assert all(image.output_path.parent == result.output_folder for image in result.images)
     with ZipFile(BytesIO(result.zip_data)) as archive:
         assert archive.namelist() == [
-            "riyadh-tech-summit/ramworld-riyadh-tech-summit-cover.jpg",
-            "riyadh-tech-summit/ramworld-riyadh-tech-summit-gallery-01.jpg",
+            "riyadh-tech-summit/ramworld-riyadh-tech-summit-cover.webp",
+            "riyadh-tech-summit/ramworld-riyadh-tech-summit-gallery-01.webp",
             "riyadh-tech-summit/ramworld-riyadh-tech-summit-logo.png",
             "riyadh-tech-summit/ramworld-riyadh-tech-summit-image-seo.csv",
         ]
@@ -46,7 +46,7 @@ def test_uploaded_batch_saves_one_folder_and_builds_zip(tmp_path: Path) -> None:
 def test_collision_is_detected_before_new_files_are_written(tmp_path: Path) -> None:
     output_folder = tmp_path / "output" / "event"
     output_folder.mkdir(parents=True)
-    existing_cover = output_folder / "ramworld-event-cover.jpg"
+    existing_cover = output_folder / "ramworld-event-cover.webp"
     existing_cover.write_bytes(b"existing")
 
     with pytest.raises(FileExistsError, match="already exist"):
@@ -91,7 +91,7 @@ def test_arabic_batch_preserves_names_and_creates_localized_metadata(
         ],
     )
 
-    expected_filename = "ramworld-منتدى-الرياض-الاقتصادي-cover.jpg"
+    expected_filename = "ramworld-منتدى-الرياض-الاقتصادي-cover.webp"
     assert result.output_folder.name == "منتدى-الرياض-الاقتصادي"
     assert result.images[0].output_path.name == expected_filename
     assert result.seo_metadata[0].alt_text == "غلاف منتدى الرياض الاقتصادي في الرياض"
