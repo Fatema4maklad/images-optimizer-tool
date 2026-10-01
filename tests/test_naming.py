@@ -4,6 +4,7 @@ import pytest
 
 from ramworld_image_tool.naming import (
     ImageKind,
+    NamingLanguage,
     build_filename,
     create_output_folder,
     slugify_name,
@@ -18,10 +19,40 @@ def test_slugify_name_preserves_arabic() -> None:
     assert slugify_name("منتدى الرياض الاقتصادي") == "منتدى-الرياض-الاقتصادي"
 
 
-def test_arabic_cover_filename() -> None:
+def test_arabic_naming_language_uses_localized_brand_and_type() -> None:
     assert (
-        build_filename("منتدى الرياض الاقتصادي", ImageKind.COVER, "webp")
-        == "ramworld-منتدى-الرياض-الاقتصادي-cover.webp"
+        build_filename(
+            "منتدى الرياض الاقتصادي",
+            ImageKind.COVER,
+            "webp",
+            language=NamingLanguage.ARABIC,
+        )
+        == "عالم-رام-منتدى-الرياض-الاقتصادي-الغلاف.webp"
+    )
+
+
+def test_arabic_gallery_filename_is_numbered() -> None:
+    assert (
+        build_filename(
+            "منتدى الرياض الاقتصادي",
+            ImageKind.GALLERY,
+            "webp",
+            2,
+            language=NamingLanguage.ARABIC,
+        )
+        == "عالم-رام-منتدى-الرياض-الاقتصادي-صور-02.webp"
+    )
+
+
+def test_arabic_logo_filename_uses_shiar_label() -> None:
+    assert (
+        build_filename(
+            "شركة الرياض",
+            ImageKind.LOGO,
+            "png",
+            language=NamingLanguage.ARABIC,
+        )
+        == "عالم-رام-شركة-الرياض-شعار.png"
     )
 
 

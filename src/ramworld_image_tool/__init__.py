@@ -7,7 +7,14 @@ from .batch import (
     process_uploaded_images,
     suggest_alt_text,
 )
-from .naming import ImageKind, build_filename, create_output_folder, slugify_name
+from .naming import (
+    ImageKind,
+    NamingLanguage,
+    build_filename,
+    create_output_folder,
+    filename_prefix,
+    slugify_name,
+)
 from .processor import (
     DEFAULT_SETTINGS,
     OptimizationSettings,
@@ -24,8 +31,10 @@ __all__ = [
     "process_uploaded_images",
     "suggest_alt_text",
     "ImageKind",
+    "NamingLanguage",
     "build_filename",
     "create_output_folder",
+    "filename_prefix",
     "slugify_name",
     "DEFAULT_SETTINGS",
     "OptimizationSettings",

@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from ramworld_image_tool.naming import ImageKind
+from ramworld_image_tool.naming import ImageKind, NamingLanguage
 from ramworld_image_tool.processor import (
     OptimizationSettings,
     optimize_image_bytes,
@@ -45,6 +45,20 @@ def test_png_logo_keeps_transparency() -> None:
     with Image.open(BytesIO(output)) as result:
         assert "A" in result.getbands()
         assert output_size == (1200, 600)
+
+
+def test_processor_uses_selected_arabic_naming_language() -> None:
+    source = BytesIO()
+    Image.new("RGB", (800, 400), "#1769aa").save(source, format="JPEG")
+
+    filename, _, _, _ = optimize_image_bytes(
+        source.getvalue(),
+        "منتدى الرياض الاقتصادي",
+        ImageKind.COVER,
+        naming_language=NamingLanguage.ARABIC,
+    )
+
+    assert filename == "عالم-رام-منتدى-الرياض-الاقتصادي-الغلاف.webp"
 
 
 def test_image_set_uses_one_folder_and_numbers_gallery(tmp_path: Path) -> None:

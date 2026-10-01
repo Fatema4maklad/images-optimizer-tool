@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
 from pathlib import Path
 
 import streamlit as st
@@ -9,15 +11,15 @@ import streamlit as st
 from ramworld_image_tool import (
     BatchResult,
     ImageKind,
+    NamingLanguage,
     UploadedImage,
+    build_filename,
     process_uploaded_images,
     slugify_name,
     suggest_alt_text,
 )
 
 
-APP_ROOT = Path(__file__).resolve().parent
-OUTPUT_ROOT = APP_ROOT / "output"
 ACCEPTED_IMAGE_TYPES = ["png", "jpg", "jpeg", "webp"]
 
 
@@ -33,6 +35,64 @@ def reset_after_source_change() -> None:
     for key in list(st.session_state):
         if key.startswith("alt_text_"):
             del st.session_state[key]
+
+
+def browse_for_output_folder() -> None:
+    """Open the Windows folder picker and store the selected destination."""
+    powershell_script = r"""
+Add-Type -AssemblyName System.Windows.Forms
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+$dialog.Description = 'Choose where processed image folders will be saved'
+$dialog.ShowNewFolderButton = $true
+if ($env:RAMWORLD_INITIAL_FOLDER -and (Test-Path -LiteralPath $env:RAMWORLD_INITIAL_FOLDER)) {
+    $dialog.SelectedPath = $env:RAMWORLD_INITIAL_FOLDER
+}
+$owner = New-Object System.Windows.Forms.Form
+$owner.TopMost = $true
+$owner.ShowInTaskbar = $false
+if ($dialog.ShowDialog($owner) -eq [System.Windows.Forms.DialogResult]::OK) {
+    Write-Output $dialog.SelectedPath
+}
+$owner.Dispose()
+$dialog.Dispose()
+"""
+    picker_environment = os.environ.copy()
+    picker_environment["RAMWORLD_INITIAL_FOLDER"] = st.session_state.get(
+        "output_folder_path", ""
+    )
+    try:
+        completed = subprocess.run(
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-STA",
+                "-Command",
+                powershell_script,
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+            env=picker_environment,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+    except OSError as exc:
+        st.session_state["folder_picker_error"] = (
+            f"The folder picker could not open: {exc}"
+        )
+        return
+
+    selected_path = completed.stdout.strip().lstrip("\ufeff")
+    if selected_path:
+        st.session_state["output_folder_path"] = selected_path
+        st.session_state.pop("folder_picker_error", None)
+        reset_after_source_change()
+    elif completed.returncode != 0:
+        st.session_state["folder_picker_error"] = (
+            "The folder picker could not open. You can paste the folder path instead."
+        )
 
 
 def clear_uploader(upload_type: str) -> None:
@@ -94,32 +154,47 @@ def collect_uploads(logo, cover, gallery, alt_texts: dict[str, str]) -> list[Upl
     return uploads
 
 
-def show_alt_text_inputs(entity_name, logo, cover, gallery) -> dict[str, str]:
+def show_alt_text_inputs(
+    entity_name,
+    logo,
+    cover,
+    gallery,
+    naming_language: NamingLanguage,
+) -> dict[str, str]:
     """Show editable localized alt-text suggestions for selected images."""
     alt_texts: dict[str, str] = {}
-    with st.expander("SEO alt text", expanded=True):
+    with st.expander("SEO alt text (optional)", expanded=False):
         st.caption(
-            "These descriptions are used on the website, not embedded inside the image. "
-            "Edit gallery descriptions to say what each photo actually shows."
+            "You can use the suggestions, edit them, or clear a field to leave its "
+            "alt text blank. Gallery descriptions should say what each photo shows."
         )
         if logo is not None:
             alt_texts["logo"] = st.text_input(
                 "Logo alt text",
-                value=suggest_alt_text(entity_name, ImageKind.LOGO),
+                value=suggest_alt_text(
+                    entity_name, ImageKind.LOGO, language=naming_language
+                ),
                 key="alt_text_logo",
                 on_change=clear_last_result,
             )
         if cover is not None:
             alt_texts["cover"] = st.text_input(
                 "Cover alt text",
-                value=suggest_alt_text(entity_name, ImageKind.COVER),
+                value=suggest_alt_text(
+                    entity_name, ImageKind.COVER, language=naming_language
+                ),
                 key="alt_text_cover",
                 on_change=clear_last_result,
             )
         for index, file in enumerate(gallery or (), start=1):
             alt_texts[f"gallery_{index}"] = st.text_input(
                 f"Gallery {index:02d} alt text · {file.name}",
-                value=suggest_alt_text(entity_name, ImageKind.GALLERY, index),
+                value=suggest_alt_text(
+                    entity_name,
+                    ImageKind.GALLERY,
+                    index,
+                    naming_language,
+                ),
                 key=f"alt_text_gallery_{index}",
                 on_change=clear_last_result,
             )
@@ -243,6 +318,41 @@ st.write(
     "Everything is saved together in one folder."
 )
 
+st.subheader("1. Select output folder")
+output_path_column, browse_column = st.columns([4, 1])
+with output_path_column:
+    selected_output_text = st.text_input(
+        "Output folder",
+        placeholder="Example: C:\\Users\\YourName\\Pictures\\RAM World",
+        key="output_folder_path",
+        on_change=reset_after_source_change,
+        help="A separate event or company folder will be created inside this location.",
+    )
+with browse_column:
+    st.write("")
+    st.write("")
+    st.button(
+        "Browse…",
+        on_click=browse_for_output_folder,
+        use_container_width=True,
+        key="browse_output_folder_button",
+    )
+
+if picker_error := st.session_state.get("folder_picker_error"):
+    st.error(picker_error)
+
+if not selected_output_text.strip():
+    st.info("Select an output folder before entering the image details.")
+    st.stop()
+
+selected_output_root = Path(selected_output_text.strip()).expanduser()
+if not selected_output_root.is_dir():
+    st.error("The selected output folder does not exist or is not a folder.")
+    st.stop()
+
+st.success(f"Output folder selected: {selected_output_root.resolve()}")
+
+st.subheader("2. Name and language")
 entity_name = st.text_input(
     "Event, company, or partner name",
     placeholder="Example: Riyadh Tech Summit",
@@ -250,18 +360,37 @@ entity_name = st.text_input(
     on_change=reset_after_source_change,
 )
 
+language_choice = st.radio(
+    "Filename language / لغة أسماء الملفات",
+    options=("English", "العربية"),
+    horizontal=True,
+    on_change=reset_after_source_change,
+    key="naming_language_choice",
+)
+naming_language = (
+    NamingLanguage.ARABIC
+    if language_choice == "العربية"
+    else NamingLanguage.ENGLISH
+)
+st.caption(
+    "Arabic: عالم رام / شعار / الغلاف / صور"
+    if naming_language is NamingLanguage.ARABIC
+    else "English: ramworld / logo / cover / gallery"
+)
+
 if entity_name.strip():
     try:
-        slug_preview = slugify_name(entity_name)
-        st.caption(
-            f"Cover filename example: ramworld-{slug_preview}-cover.webp"
+        cover_filename_preview = build_filename(
+            entity_name,
+            ImageKind.COVER,
+            "webp",
+            language=naming_language,
         )
+        st.caption(f"Cover filename example: {cover_filename_preview}")
     except ValueError:
-        slug_preview = ""
-else:
-    slug_preview = ""
+        pass
 
-st.subheader("Upload images")
+st.subheader("3. Upload images")
 for upload_type in ("logo", "cover", "gallery"):
     st.session_state.setdefault(f"{upload_type}_uploader_version", 0)
 
@@ -340,6 +469,7 @@ if entity_name.strip() and has_upload:
         logo_file,
         cover_file,
         gallery_files,
+        naming_language,
     )
 else:
     alt_texts = {}
@@ -350,7 +480,7 @@ with st.expander("Advanced options"):
         value=False,
         help="Leave this disabled to protect images from accidental replacement.",
     )
-    st.caption("Output folder: " + str(OUTPUT_ROOT.resolve()))
+    st.caption("Output folder: " + str(selected_output_root.resolve()))
 
 process_clicked = st.button(
     "Optimize and save images",
@@ -373,8 +503,9 @@ if process_clicked:
         with st.spinner("Optimizing images…"):
             batch_result = process_uploaded_images(
                 entity_name,
-                OUTPUT_ROOT,
+                selected_output_root,
                 uploads,
+                naming_language=naming_language,
                 overwrite=overwrite,
             )
         st.session_state["last_result"] = batch_result
@@ -405,3 +536,6 @@ with st.expander("Google Images publishing checklist"):
         publishing steps before Google can discover and index the images.
         """
     )
+
+st.divider()
+st.caption("made by Eng. fatem ★")

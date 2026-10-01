@@ -21,6 +21,15 @@ Arabic names stay in Arabic. For `منتدى الرياض الاقتصادي`, t
 `ramworld-منتدى-الرياض-الاقتصادي-cover.webp` and is placed in the folder
 `منتدى-الرياض-الاقتصادي`.
 
+The interface includes an English/Arabic filename-language selector. Arabic
+naming uses `عالم-رام`, `شعار`, `الغلاف`, and `صور`, for example:
+
+```text
+عالم-رام-منتدى-الرياض-الاقتصادي-شعار.png
+عالم-رام-منتدى-الرياض-الاقتصادي-الغلاف.webp
+عالم-رام-منتدى-الرياض-الاقتصادي-صور-01.webp
+```
+
 ## Workflow
 
 1. Enter the event, company, or partner name.
@@ -50,16 +59,23 @@ not unnecessarily converted.
 ## Run the application
 
 On Windows, double-click `start_app.bat`. The application opens in your web
-browser. Processed files are saved under the project's `output` folder and can
-also be downloaded together as a ZIP file from the results screen.
+browser. Select the destination folder first using the native folder picker or
+by pasting its path. The tool creates the event/company folder inside that
+location. Results can also be downloaded together as a ZIP file.
 
 The interface provides editable Arabic or English alt-text suggestions. It also
 creates a UTF-8 SEO metadata CSV containing each filename, alt text, URL-encoded
 filename, and an HTML `<img>` example for the website team.
 
+The SEO alt-text section is optional and collapsed by default. Users can accept
+the suggestions without opening it, edit them, or clear a field for blank alt
+text.
+
 Each upload area has a clear button, and `Clear all uploads` empties the entire
 form. After processing, the interface explicitly confirms that the images were
 saved successfully and shows the destination folder.
+
+made by Eng. fatem ★
 
 For command-line use:
 

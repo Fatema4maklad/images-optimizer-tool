@@ -11,7 +11,12 @@ from pathlib import Path
 from urllib.parse import quote
 from zipfile import ZIP_DEFLATED, ZipFile
 
-from .naming import ImageKind, slugify_name
+from .naming import (
+    ImageKind,
+    NamingLanguage,
+    filename_prefix,
+    slugify_name,
+)
 from .processor import ProcessedImage, optimize_image_bytes
 
 
@@ -89,13 +94,22 @@ def suggest_alt_text(
     entity_name: str,
     image_kind: ImageKind,
     gallery_index: int | None = None,
+    language: NamingLanguage | None = None,
 ) -> str:
     """Create a concise localized starting point for HTML alt text."""
     clean_name = " ".join(entity_name.split())
     if not clean_name:
         raise ValueError("A company, event, or partner name is required.")
 
-    if ARABIC_CHARACTER.search(clean_name):
+    selected_language = language
+    if selected_language is None:
+        selected_language = (
+            NamingLanguage.ARABIC
+            if ARABIC_CHARACTER.search(clean_name)
+            else NamingLanguage.ENGLISH
+        )
+
+    if selected_language is NamingLanguage.ARABIC:
         if image_kind is ImageKind.LOGO:
             return f"شعار {clean_name}"
         if image_kind is ImageKind.COVER:
@@ -172,6 +186,7 @@ def process_uploaded_images(
     output_root: Path,
     uploads: list[UploadedImage],
     *,
+    naming_language: NamingLanguage = NamingLanguage.ENGLISH,
     overwrite: bool = False,
 ) -> BatchResult:
     """Validate, optimize, save, and package a set of uploaded images."""
@@ -190,6 +205,7 @@ def process_uploaded_images(
             entity_name,
             upload.image_kind,
             gallery_index=upload.gallery_index,
+            naming_language=naming_language,
         )
         prepared.append(
             _PreparedImage(
@@ -201,11 +217,12 @@ def process_uploaded_images(
                 image_kind=upload.image_kind,
                 alt_text=(
                     upload.alt_text.strip()
-                    if upload.alt_text and upload.alt_text.strip()
+                    if upload.alt_text is not None
                     else suggest_alt_text(
                         entity_name,
                         upload.image_kind,
                         upload.gallery_index,
+                        naming_language,
                     )
                 ),
             )
@@ -245,7 +262,10 @@ def process_uploaded_images(
             _make_seo_metadata(image.image_kind, image.filename, image.alt_text)
         )
 
-    metadata_path = output_folder / f"ramworld-{slug}-image-seo.csv"
+    metadata_path = (
+        output_folder
+        / f"{filename_prefix(naming_language)}-{slug}-image-seo.csv"
+    )
     metadata_by_filename = {
         entry.filename: entry for entry in _read_metadata(metadata_path)
     }

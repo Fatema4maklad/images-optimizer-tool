@@ -14,6 +14,37 @@ class ImageKind(StrEnum):
     GALLERY = "gallery"
 
 
+class NamingLanguage(StrEnum):
+    """Supported languages for generated filename labels."""
+
+    ENGLISH = "english"
+    ARABIC = "arabic"
+
+
+FILENAME_PREFIXES = {
+    NamingLanguage.ENGLISH: "ramworld",
+    NamingLanguage.ARABIC: "عالم-رام",
+}
+
+IMAGE_KIND_LABELS = {
+    NamingLanguage.ENGLISH: {
+        ImageKind.LOGO: "logo",
+        ImageKind.COVER: "cover",
+        ImageKind.GALLERY: "gallery",
+    },
+    NamingLanguage.ARABIC: {
+        ImageKind.LOGO: "شعار",
+        ImageKind.COVER: "الغلاف",
+        ImageKind.GALLERY: "صور",
+    },
+}
+
+
+def filename_prefix(language: NamingLanguage = NamingLanguage.ENGLISH) -> str:
+    """Return the brand prefix used by the selected naming language."""
+    return FILENAME_PREFIXES[NamingLanguage(language)]
+
+
 def slugify_name(name: str) -> str:
     """Convert an event, company, or partner name into a safe URL-style slug."""
     cleaned_name = name.strip()
@@ -40,13 +71,20 @@ def build_filename(
     image_kind: ImageKind,
     extension: str,
     gallery_index: int | None = None,
+    *,
+    language: NamingLanguage = NamingLanguage.ENGLISH,
 ) -> str:
     """Build a consistent SEO filename for an uploaded image."""
     normalized_extension = extension.lower().lstrip(".")
     if not normalized_extension:
         raise ValueError("An image extension is required.")
 
-    base_name = f"ramworld-{slugify_name(name)}-{image_kind.value}"
+    selected_language = NamingLanguage(language)
+    selected_labels = IMAGE_KIND_LABELS[selected_language]
+    base_name = (
+        f"{filename_prefix(selected_language)}-{slugify_name(name)}-"
+        f"{selected_labels[image_kind]}"
+    )
 
     if image_kind is ImageKind.GALLERY:
         if gallery_index is None or gallery_index < 1:

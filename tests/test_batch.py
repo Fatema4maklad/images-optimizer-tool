@@ -5,7 +5,7 @@ from zipfile import ZipFile
 import pytest
 from PIL import Image
 
-from ramworld_image_tool import ImageKind
+from ramworld_image_tool import ImageKind, NamingLanguage
 from ramworld_image_tool.batch import (
     UploadedImage,
     process_uploaded_images,
@@ -89,9 +89,10 @@ def test_arabic_batch_preserves_names_and_creates_localized_metadata(
                 alt_text="غلاف منتدى الرياض الاقتصادي في الرياض",
             )
         ],
+        naming_language=NamingLanguage.ARABIC,
     )
 
-    expected_filename = "ramworld-منتدى-الرياض-الاقتصادي-cover.webp"
+    expected_filename = "عالم-رام-منتدى-الرياض-الاقتصادي-الغلاف.webp"
     assert result.output_folder.name == "منتدى-الرياض-الاقتصادي"
     assert result.images[0].output_path.name == expected_filename
     assert result.seo_metadata[0].alt_text == "غلاف منتدى الرياض الاقتصادي في الرياض"
@@ -106,6 +107,11 @@ def test_arabic_batch_preserves_names_and_creates_localized_metadata(
         assert (
             f"منتدى-الرياض-الاقتصادي/{expected_filename}" in archive.namelist()
         )
+        assert (
+            "منتدى-الرياض-الاقتصادي/"
+            "عالم-رام-منتدى-الرياض-الاقتصادي-image-seo.csv"
+            in archive.namelist()
+        )
 
 
 def test_alt_text_suggestions_follow_input_language() -> None:
@@ -117,3 +123,29 @@ def test_alt_text_suggestions_follow_input_language() -> None:
         suggest_alt_text("Riyadh Economic Forum", ImageKind.LOGO)
         == "Riyadh Economic Forum logo"
     )
+    assert (
+        suggest_alt_text(
+            "Riyadh Economic Forum",
+            ImageKind.LOGO,
+            language=NamingLanguage.ARABIC,
+        )
+        == "شعار Riyadh Economic Forum"
+    )
+
+
+def test_blank_optional_alt_text_is_not_regenerated(tmp_path: Path) -> None:
+    result = process_uploaded_images(
+        "Event",
+        tmp_path / "output",
+        [
+            UploadedImage(
+                "logo.png",
+                image_bytes(),
+                ImageKind.LOGO,
+                alt_text="   ",
+            )
+        ],
+    )
+
+    assert result.seo_metadata[0].alt_text == ""
+    assert 'alt=""' in result.seo_metadata[0].html_example
