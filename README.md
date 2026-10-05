@@ -52,9 +52,9 @@ Images keep their aspect ratio and are never enlarged. PNG optimization is
 lossless, logo transparency is preserved, and an already optimized image is
 kept unchanged when re-encoding would make it larger.
 
-Covers and gallery photos are converted to high-quality WebP for smaller web
-downloads. Logos retain their uploaded format so transparent PNG branding is
-not unnecessarily converted.
+Raster covers and gallery photos are converted to high-quality WebP for smaller
+web downloads. SVG files remain SVG, and logos retain their uploaded format, so
+transparent PNG and vector branding are not unnecessarily converted.
 
 ## Run the application
 

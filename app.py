@@ -20,7 +20,7 @@ from ramworld_image_tool import (
 )
 
 
-ACCEPTED_IMAGE_TYPES = ["png", "jpg", "jpeg", "webp"]
+ACCEPTED_IMAGE_TYPES = ["png", "jpg", "jpeg", "webp", "svg"]
 
 
 def clear_last_result() -> None:
@@ -219,7 +219,14 @@ def show_preview(logo, cover, gallery) -> None:
         columns = st.columns(3)
         for index, (label, uploaded_file) in enumerate(preview_items):
             with columns[index % 3]:
-                st.image(uploaded_file.getvalue(), caption=f"{label} · {uploaded_file.name}")
+                preview_data = uploaded_file.getvalue()
+                if Path(uploaded_file.name).suffix.lower() == ".svg":
+                    try:
+                        preview_data = preview_data.decode("utf-8-sig")
+                    except UnicodeDecodeError:
+                        st.warning(f"Preview unavailable for {uploaded_file.name}")
+                        continue
+                st.image(preview_data, caption=f"{label} · {uploaded_file.name}")
 
 
 def show_results(result: BatchResult, entity_slug: str) -> None:
@@ -399,7 +406,7 @@ with left:
     logo_file = st.file_uploader(
         "Logo",
         type=ACCEPTED_IMAGE_TYPES,
-        help="One logo. Transparent PNG files are supported.",
+        help="One logo. Transparent PNG and vector SVG files are supported.",
         on_change=reset_after_source_change,
         key=f"logo_uploader_{st.session_state.logo_uploader_version}",
     )
@@ -437,8 +444,8 @@ gallery_files = st.file_uploader(
     key=f"gallery_uploader_{st.session_state.gallery_uploader_version}",
 )
 st.caption(
-    "Covers and gallery photos are converted to high-quality WebP. "
-    "Logos keep their original format."
+    "Raster covers and gallery photos are converted to high-quality WebP. "
+    "SVG files and logos keep their original format."
 )
 
 has_upload = bool(logo_file or cover_file or gallery_files)

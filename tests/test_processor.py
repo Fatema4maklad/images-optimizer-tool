@@ -16,6 +16,14 @@ def make_image(path: Path, size: tuple[int, int], image_format: str = "PNG") -> 
     Image.new("RGB", size, "#1769aa").save(path, format=image_format)
 
 
+def svg_bytes(width: int = 800, height: int = 400) -> bytes:
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" '
+        f'height="{height}" viewBox="0 0 {width} {height}">'
+        f'<rect width="{width}" height="{height}" fill="#1769aa"/></svg>'
+    ).encode()
+
+
 def test_cover_uses_event_name_and_is_resized() -> None:
     source = BytesIO()
     Image.new("RGB", (2400, 1600), "#1769aa").save(source, format="JPEG")
@@ -45,6 +53,34 @@ def test_png_logo_keeps_transparency() -> None:
     with Image.open(BytesIO(output)) as result:
         assert "A" in result.getbands()
         assert output_size == (1200, 600)
+
+
+def test_svg_logo_stays_svg() -> None:
+    source = svg_bytes()
+
+    filename, output, original_size, output_size = optimize_image_bytes(
+        source, "Partner Name", ImageKind.LOGO
+    )
+
+    assert filename == "ramworld-partner-name-logo.svg"
+    assert output == source
+    assert original_size == (800, 400)
+    assert output_size == original_size
+
+
+def test_svg_cover_stays_svg() -> None:
+    source = svg_bytes(2400, 1600)
+    filename, output, original_size, output_size = optimize_image_bytes(
+        source,
+        "Riyadh Tech Summit",
+        ImageKind.COVER,
+        settings=OptimizationSettings(1200, 600),
+    )
+
+    assert filename == "ramworld-riyadh-tech-summit-cover.svg"
+    assert output == source
+    assert original_size == (2400, 1600)
+    assert output_size == original_size
 
 
 def test_processor_uses_selected_arabic_naming_language() -> None:

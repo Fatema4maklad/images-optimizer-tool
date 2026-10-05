@@ -272,7 +272,7 @@ def process_uploaded_images(
     metadata_by_filename.update(
         {entry.filename: entry for entry in new_metadata}
     )
-    image_extensions = {".jpg", ".jpeg", ".png", ".webp"}
+    image_extensions = {".jpg", ".jpeg", ".png", ".webp", ".svg"}
     saved_images = sorted(
         path
         for path in output_folder.iterdir()

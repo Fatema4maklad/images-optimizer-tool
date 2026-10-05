@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from io import BytesIO
+import math
 from pathlib import Path
+import re
 from typing import Sequence
+from xml.etree import ElementTree
 
 from PIL import Image, ImageOps, UnidentifiedImageError
 
@@ -17,7 +20,27 @@ from .naming import (
 )
 
 
-SUPPORTED_FORMATS = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp"}
+SUPPORTED_FORMATS = {
+    "JPEG": "jpg",
+    "PNG": "png",
+    "WEBP": "webp",
+    "SVG": "svg",
+}
+
+SVG_LENGTH = re.compile(
+    r"^\s*(?P<value>(?:\d+(?:\.\d*)?|\.\d+))\s*"
+    r"(?P<unit>px|in|cm|mm|pt|pc)?\s*$",
+    re.IGNORECASE,
+)
+SVG_UNIT_TO_PIXELS = {
+    "": 1.0,
+    "px": 1.0,
+    "in": 96.0,
+    "cm": 96.0 / 2.54,
+    "mm": 96.0 / 25.4,
+    "pt": 96.0 / 72.0,
+    "pc": 16.0,
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,6 +84,68 @@ class ProcessedImage:
         if not self.original_bytes:
             return 0.0
         return self.bytes_saved / self.original_bytes * 100
+
+
+def _svg_root(image_data: bytes) -> ElementTree.Element | None:
+    """Return the root for SVG data, or ``None`` for non-SVG input."""
+    if b"\x00" in image_data:
+        return None
+    if b"<!DOCTYPE" in image_data.upper() or b"<!ENTITY" in image_data.upper():
+        raise ValueError("SVG files containing DTDs or entities are not supported.")
+    try:
+        root = ElementTree.fromstring(image_data)
+    except ElementTree.ParseError:
+        return None
+    if root.tag.rsplit("}", 1)[-1].lower() != "svg":
+        return None
+    return root
+
+
+def _svg_length(value: str | None) -> float | None:
+    if not value:
+        return None
+    match = SVG_LENGTH.fullmatch(value)
+    if match is None:
+        return None
+    length = float(match.group("value"))
+    unit = match.group("unit") or ""
+    return length * SVG_UNIT_TO_PIXELS[unit.lower()]
+
+
+def _svg_dimensions(root: ElementTree.Element) -> tuple[int, int]:
+    """Read an SVG's intrinsic pixel size, falling back to its viewBox."""
+    width = _svg_length(root.get("width"))
+    height = _svg_length(root.get("height"))
+    viewbox_width: float | None = None
+    viewbox_height: float | None = None
+    viewbox = root.get("viewBox") or root.get("viewbox")
+    if viewbox:
+        try:
+            _, _, viewbox_width, viewbox_height = (
+                float(part) for part in re.split(r"[\s,]+", viewbox.strip())
+            )
+        except (TypeError, ValueError):
+            raise ValueError("The SVG has an invalid viewBox.") from None
+
+    if width is None and height is None:
+        width, height = viewbox_width, viewbox_height
+    elif width is None and height and viewbox_width and viewbox_height:
+        width = height * viewbox_width / viewbox_height
+    elif height is None and width and viewbox_width and viewbox_height:
+        height = width * viewbox_height / viewbox_width
+
+    if (
+        not width
+        or not height
+        or not math.isfinite(width)
+        or not math.isfinite(height)
+        or width <= 0
+        or height <= 0
+    ):
+        raise ValueError(
+            "The SVG must define positive width and height values or a valid viewBox."
+        )
+    return max(1, round(width)), max(1, round(height))
 
 
 def _encode_image(
@@ -116,6 +201,18 @@ def optimize_image_bytes(
         raise ValueError("The uploaded image is empty.")
 
     selected_settings = settings or DEFAULT_SETTINGS[image_kind]
+
+    svg_root = _svg_root(image_data)
+    if svg_root is not None:
+        original_size = _svg_dimensions(svg_root)
+        filename = build_filename(
+            entity_name,
+            image_kind,
+            SUPPORTED_FORMATS["SVG"],
+            gallery_index,
+            language=naming_language,
+        )
+        return filename, image_data, original_size, original_size
 
     try:
         with Image.open(BytesIO(image_data)) as source:

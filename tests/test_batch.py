@@ -19,6 +19,13 @@ def image_bytes(image_format: str = "PNG", size: tuple[int, int] = (1000, 500)) 
     return output.getvalue()
 
 
+def svg_bytes() -> bytes:
+    return (
+        b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400">'
+        b'<rect width="800" height="400" fill="#1769aa"/></svg>'
+    )
+
+
 def test_uploaded_batch_saves_one_folder_and_builds_zip(tmp_path: Path) -> None:
     result = process_uploaded_images(
         "Riyadh Tech Summit",
@@ -41,6 +48,18 @@ def test_uploaded_batch_saves_one_folder_and_builds_zip(tmp_path: Path) -> None:
             "riyadh-tech-summit/ramworld-riyadh-tech-summit-logo.png",
             "riyadh-tech-summit/ramworld-riyadh-tech-summit-image-seo.csv",
         ]
+
+
+def test_uploaded_svg_logo_is_included_in_zip(tmp_path: Path) -> None:
+    result = process_uploaded_images(
+        "SVG Partner",
+        tmp_path / "output",
+        [UploadedImage("logo.svg", svg_bytes(), ImageKind.LOGO)],
+    )
+
+    assert result.images[0].output_path.name == "ramworld-svg-partner-logo.svg"
+    with ZipFile(BytesIO(result.zip_data)) as archive:
+        assert "svg-partner/ramworld-svg-partner-logo.svg" in archive.namelist()
 
 
 def test_collision_is_detected_before_new_files_are_written(tmp_path: Path) -> None:
