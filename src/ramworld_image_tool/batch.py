@@ -187,6 +187,7 @@ def process_uploaded_images(
     uploads: list[UploadedImage],
     *,
     naming_language: NamingLanguage = NamingLanguage.ENGLISH,
+    include_brand_prefix: bool = True,
     overwrite: bool = False,
 ) -> BatchResult:
     """Validate, optimize, save, and package a set of uploaded images."""
@@ -206,6 +207,7 @@ def process_uploaded_images(
             upload.image_kind,
             gallery_index=upload.gallery_index,
             naming_language=naming_language,
+            include_brand_prefix=include_brand_prefix,
         )
         prepared.append(
             _PreparedImage(
@@ -262,10 +264,12 @@ def process_uploaded_images(
             _make_seo_metadata(image.image_kind, image.filename, image.alt_text)
         )
 
-    metadata_path = (
-        output_folder
-        / f"{filename_prefix(naming_language)}-{slug}-image-seo.csv"
+    metadata_base = (
+        f"{filename_prefix(naming_language)}-{slug}"
+        if include_brand_prefix
+        else slug
     )
+    metadata_path = output_folder / f"{metadata_base}-image-seo.csv"
     metadata_by_filename = {
         entry.filename: entry for entry in _read_metadata(metadata_path)
     }

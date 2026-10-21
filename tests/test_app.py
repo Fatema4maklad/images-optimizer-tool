@@ -1,50 +1,116 @@
+from io import BytesIO
 from pathlib import Path
+from zipfile import ZipFile
 
-from streamlit.testing.v1 import AppTest
+from fastapi.testclient import TestClient
+from PIL import Image
+
+from app import app
 
 
-def test_streamlit_app_starts_without_errors(tmp_path: Path) -> None:
-    app_path = Path(__file__).parents[1] / "app.py"
-    app = AppTest.from_file(str(app_path)).run(timeout=15)
+client = TestClient(app)
 
-    assert not app.exception
-    assert app.title[0].value == "RAM World Image Optimizer"
-    assert app.text_input[0].label == "Output folder"
-    assert app.button[0].label == "Browse…"
-    assert any(
-        "Select an output folder" in information.value
-        for information in app.info
+
+def image_bytes(format_name: str = "PNG", size: tuple[int, int] = (900, 600)) -> bytes:
+    output = BytesIO()
+    Image.new("RGB", size, (44, 105, 190)).save(output, format=format_name)
+    return output.getvalue()
+
+
+def test_normal_web_interface_contains_in_field_previews_and_theme_switch() -> None:
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "RAM World Image Optimizer" in response.text
+    assert 'id="theme-toggle"' in response.text
+    assert 'name="include_brand_prefix"' in response.text
+    assert 'id="logo-drop-zone"' in response.text
+    assert 'class="preview-area"' in response.text
+    assert 'data-add="gallery"' in response.text
+    assert 'id="preview-dialog"' in response.text
+    assert "SEO alt text" in response.text
+    assert "made by Eng. fatem ★" in response.text
+
+    css = client.get("/assets/styles.css")
+    assert css.status_code == 200
+    assert '[data-theme="dark"]' in css.text
+    assert ".drop-zone.has-files .preview-area" in css.text
+    assert ".remove-image" in css.text
+    assert "overflow-y: auto" in css.text
+
+    javascript = client.get("/assets/app.js")
+    assert javascript.status_code == 200
+    assert "URL.createObjectURL" in javascript.text
+    assert 'zone.classList.toggle("has-files"' in javascript.text
+    assert 'localStorage.setItem("ramworld-theme"' in javascript.text
+    assert "data-remove-kind" in javascript.text
+    assert "showImagePreview" in javascript.text
+
+
+def test_process_endpoint_saves_and_returns_download(tmp_path: Path) -> None:
+    response = client.post(
+        "/api/process",
+        data={
+            "output_folder": str(tmp_path),
+            "entity_name": "Riyadh Forum",
+            "naming_language": "english",
+            "overwrite": "false",
+            "logo_alt": "Riyadh Forum logo",
+            "cover_alt": "Riyadh Forum cover",
+            "gallery_alt": '["Riyadh Forum audience"]',
+        },
+        files=[
+            ("logo", ("logo.png", image_bytes(), "image/png")),
+            ("cover", ("cover.jpg", image_bytes("JPEG"), "image/jpeg")),
+            ("gallery", ("audience.jpg", image_bytes("JPEG"), "image/jpeg")),
+        ],
     )
 
-    app.text_input[0].input(str(tmp_path)).run(timeout=15)
+    assert response.status_code == 200
+    result = response.json()
+    assert result["message"] == "Images have been saved successfully."
+    assert len(result["images"]) == 3
+    assert result["images"][0]["filename"].endswith("-logo.png")
+    assert result["images"][1]["filename"].endswith("-cover.webp")
+    assert result["images"][2]["filename"].endswith("-gallery-01.webp")
+    assert Path(result["output_folder"]).is_dir()
 
-    assert not app.exception
-    entity_name_input = next(
-        field
-        for field in app.text_input
-        if field.label == "Event, company, or partner name"
+    download = client.get(result["download_url"])
+    assert download.status_code == 200
+    assert download.headers["content-type"] == "application/zip"
+    with ZipFile(BytesIO(download.content)) as archive:
+        names = archive.namelist()
+    assert any(name.endswith("-logo.png") for name in names)
+    assert any(name.endswith("-image-seo.csv") for name in names)
+
+
+def test_process_endpoint_requires_a_valid_destination(tmp_path: Path) -> None:
+    response = client.post(
+        "/api/process",
+        data={
+            "output_folder": str(tmp_path / "missing"),
+            "entity_name": "Event",
+        },
+        files={"logo": ("logo.png", image_bytes(), "image/png")},
     )
-    assert app.radio[0].label == "Filename language / لغة أسماء الملفات"
-    buttons = {button.label: button for button in app.button}
-    assert {"Clear logo", "Clear cover", "Clear gallery", "Clear all uploads"} <= set(
-        buttons
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Select a valid output folder."
+
+
+def test_process_endpoint_can_exclude_ramworld_prefix(tmp_path: Path) -> None:
+    response = client.post(
+        "/api/process",
+        data={
+            "output_folder": str(tmp_path),
+            "entity_name": "Riyadh Forum",
+            "naming_language": "english",
+            "include_brand_prefix": "false",
+        },
+        files={"logo": ("logo.png", image_bytes(), "image/png")},
     )
-    assert buttons["Optimize and save images"].disabled
-    assert buttons["Clear all uploads"].disabled
-    assert any(caption.value == "made by Eng. fatem ★" for caption in app.caption)
 
-    entity_name_input.input("منتدى الرياض الاقتصادي").run(timeout=15)
-
-    assert not app.exception
-    assert any(
-        "ramworld-منتدى-الرياض-الاقتصادي-cover.webp" in caption.value
-        for caption in app.caption
-    )
-
-    app.radio[0].set_value("العربية").run(timeout=15)
-
-    assert not app.exception
-    assert any(
-        "عالم-رام-منتدى-الرياض-الاقتصادي-الغلاف.webp" in caption.value
-        for caption in app.caption
-    )
+    assert response.status_code == 200
+    result = response.json()
+    assert result["images"][0]["filename"] == "riyadh-forum-logo.png"
+    assert Path(result["output_folder"], "riyadh-forum-image-seo.csv").is_file()

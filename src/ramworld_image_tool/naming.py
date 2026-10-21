@@ -73,6 +73,7 @@ def build_filename(
     gallery_index: int | None = None,
     *,
     language: NamingLanguage = NamingLanguage.ENGLISH,
+    include_brand_prefix: bool = True,
 ) -> str:
     """Build a consistent SEO filename for an uploaded image."""
     normalized_extension = extension.lower().lstrip(".")
@@ -81,10 +82,10 @@ def build_filename(
 
     selected_language = NamingLanguage(language)
     selected_labels = IMAGE_KIND_LABELS[selected_language]
-    base_name = (
-        f"{filename_prefix(selected_language)}-{slugify_name(name)}-"
-        f"{selected_labels[image_kind]}"
-    )
+    name_parts = [slugify_name(name), selected_labels[image_kind]]
+    if include_brand_prefix:
+        name_parts.insert(0, filename_prefix(selected_language))
+    base_name = "-".join(name_parts)
 
     if image_kind is ImageKind.GALLERY:
         if gallery_index is None or gallery_index < 1:

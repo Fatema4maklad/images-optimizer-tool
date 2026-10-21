@@ -30,6 +30,10 @@ naming uses `عالم-رام`, `شعار`, `الغلاف`, and `صور`, for exa
 عالم-رام-منتدى-الرياض-الاقتصادي-صور-01.webp
 ```
 
+The **RAM World prefix** option controls whether generated names begin with
+`ramworld-` (or `عالم-رام-` in Arabic). Choose **Exclude** to create names such
+as `riyadh-tech-summit-cover.webp` while keeping the same output folder.
+
 ## Workflow
 
 1. Enter the event, company, or partner name.
@@ -71,14 +75,20 @@ The SEO alt-text section is optional and collapsed by default. Users can accept
 the suggestions without opening it, edit them, or clear a field for blank alt
 text.
 
-Each upload area has a clear button, and `Clear all uploads` empties the entire
+Each upload area has a clear button, and `Clear all` empties the entire
 form. After processing, the interface explicitly confirms that the images were
 saved successfully and shows the destination folder.
+
+The interface is a standard local website with a compact, responsive layout
+and a persistent light/dark mode switch. Each image preview appears immediately
+inside the same box used to select or drop the file. The gallery box shows up
+to six thumbnails and a count for the remaining images. Results open in a
+dialog so the main workflow stays short.
 
 made by Eng. fatem ★
 
 For command-line use:
 
 ```powershell
-.venv\Scripts\python.exe -m streamlit run app.py
+.venv\Scripts\python.exe -m uvicorn app:app --host 127.0.0.1 --port 8765
 ```

@@ -70,6 +70,32 @@ def test_build_numbered_gallery_filename() -> None:
     )
 
 
+def test_build_filename_can_exclude_brand_prefix() -> None:
+    assert (
+        build_filename(
+            "Al Riyadh Company",
+            ImageKind.GALLERY,
+            "webp",
+            3,
+            include_brand_prefix=False,
+        )
+        == "al-riyadh-company-gallery-03.webp"
+    )
+
+
+def test_arabic_filename_can_exclude_brand_prefix() -> None:
+    assert (
+        build_filename(
+            "منتدى الرياض الاقتصادي",
+            ImageKind.COVER,
+            "webp",
+            language=NamingLanguage.ARABIC,
+            include_brand_prefix=False,
+        )
+        == "منتدى-الرياض-الاقتصادي-الغلاف.webp"
+    )
+
+
 def test_gallery_requires_positive_index() -> None:
     with pytest.raises(ValueError, match="starting at 1"):
         build_filename("Al Riyadh Company", ImageKind.GALLERY, "webp", 0)

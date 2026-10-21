@@ -195,6 +195,7 @@ def optimize_image_bytes(
     gallery_index: int | None = None,
     settings: OptimizationSettings | None = None,
     naming_language: NamingLanguage = NamingLanguage.ENGLISH,
+    include_brand_prefix: bool = True,
 ) -> tuple[str, bytes, tuple[int, int], tuple[int, int]]:
     """Optimize image bytes and return its filename, bytes, and dimensions."""
     if not image_data:
@@ -211,6 +212,7 @@ def optimize_image_bytes(
             SUPPORTED_FORMATS["SVG"],
             gallery_index,
             language=naming_language,
+            include_brand_prefix=include_brand_prefix,
         )
         return filename, image_data, original_size, original_size
 
@@ -263,6 +265,7 @@ def optimize_image_bytes(
         SUPPORTED_FORMATS[target_format],
         gallery_index,
         language=naming_language,
+        include_brand_prefix=include_brand_prefix,
     )
     return filename, encoded, original_size, output_size
 
@@ -276,6 +279,7 @@ def process_image_file(
     gallery_index: int | None = None,
     settings: OptimizationSettings | None = None,
     naming_language: NamingLanguage = NamingLanguage.ENGLISH,
+    include_brand_prefix: bool = True,
     overwrite: bool = False,
 ) -> ProcessedImage:
     """Process one image and write it into an existing entity folder."""
@@ -291,6 +295,7 @@ def process_image_file(
         gallery_index=gallery_index,
         settings=settings,
         naming_language=naming_language,
+        include_brand_prefix=include_brand_prefix,
     )
 
     output_path = Path(output_folder) / filename
@@ -316,6 +321,7 @@ def process_image_set(
     cover: Path | None = None,
     gallery: Sequence[Path] = (),
     naming_language: NamingLanguage = NamingLanguage.ENGLISH,
+    include_brand_prefix: bool = True,
     overwrite: bool = False,
 ) -> list[ProcessedImage]:
     """Process all supplied images into one folder for an event or organization."""
@@ -333,6 +339,7 @@ def process_image_set(
                 entity_name,
                 ImageKind.LOGO,
                 naming_language=naming_language,
+                include_brand_prefix=include_brand_prefix,
                 overwrite=overwrite,
             )
         )
@@ -344,6 +351,7 @@ def process_image_set(
                 entity_name,
                 ImageKind.COVER,
                 naming_language=naming_language,
+                include_brand_prefix=include_brand_prefix,
                 overwrite=overwrite,
             )
         )
@@ -356,6 +364,7 @@ def process_image_set(
                 ImageKind.GALLERY,
                 gallery_index=index,
                 naming_language=naming_language,
+                include_brand_prefix=include_brand_prefix,
                 overwrite=overwrite,
             )
         )
