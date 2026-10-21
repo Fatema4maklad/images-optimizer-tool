@@ -67,6 +67,16 @@ browser. Select the destination folder first using the native folder picker or
 by pasting its path. The tool creates the event/company folder inside that
 location. Results can also be downloaded together as a ZIP file.
 
+On macOS, install Python 3.11 or newer once, then double-click
+`start_app.command`. The first launch creates a separate Mac environment and
+installs the required packages automatically, so it can take a minute. Later
+launches open immediately. If macOS reports that the launcher is not
+executable, open Terminal in the project folder and run this once:
+
+```bash
+chmod +x start_app.command
+```
+
 The interface provides editable Arabic or English alt-text suggestions. It also
 creates a UTF-8 SEO metadata CSV containing each filename, alt text, URL-encoded
 filename, and an HTML `<img>` example for the website team.

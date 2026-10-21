@@ -1,10 +1,12 @@
 from io import BytesIO
 from pathlib import Path
 from zipfile import ZipFile
+from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
 from PIL import Image
 
+import app as app_module
 from app import app
 
 
@@ -45,6 +47,25 @@ def test_normal_web_interface_contains_in_field_previews_and_theme_switch() -> N
     assert 'localStorage.setItem("ramworld-theme"' in javascript.text
     assert "data-remove-kind" in javascript.text
     assert "showImagePreview" in javascript.text
+
+
+def test_mac_launcher_bootstraps_and_starts_the_app() -> None:
+    launcher = Path(__file__).parents[1] / "start_app.command"
+    contents = launcher.read_text(encoding="utf-8")
+
+    assert contents.startswith("#!/bin/bash")
+    assert 'MAC_ENV=".venv-mac"' in contents
+    assert "python3 -m venv" in contents
+    assert "pip install -e ." in contents
+    assert "open \"http://127.0.0.1:8765/" in contents
+
+
+def test_mac_folder_picker_uses_osascript(monkeypatch) -> None:
+    completed = SimpleNamespace(returncode=0, stdout="/Users/shooq/Pictures/\n", stderr="")
+    monkeypatch.setattr(app_module.sys, "platform", "darwin")
+    monkeypatch.setattr(app_module.subprocess, "run", lambda *args, **kwargs: completed)
+
+    assert app_module._pick_output_folder() == "/Users/shooq/Pictures/"
 
 
 def test_process_endpoint_saves_and_returns_download(tmp_path: Path) -> None:

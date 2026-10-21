@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 from collections import OrderedDict
 from io import BytesIO
 from pathlib import Path
@@ -47,7 +48,34 @@ async def prevent_stale_interface_cache(request: Request, call_next):
 
 
 def _pick_output_folder(initial_folder: str = "") -> str | None:
-    """Open the native Windows folder picker and return its selected path."""
+    """Open the native folder picker and return its selected path."""
+    if sys.platform == "darwin":
+        script = (
+            'set selectedFolder to choose folder with prompt '
+            '"Choose where processed image folders will be saved"\n'
+            "return POSIX path of selectedFolder"
+        )
+        completed = subprocess.run(
+            ["osascript", "-e", script],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        if completed.returncode != 0:
+            if "User canceled" in completed.stderr:
+                return None
+            raise RuntimeError(
+                "The folder picker could not open. Paste the folder path instead."
+            )
+        return completed.stdout.strip() or None
+
+    if sys.platform != "win32":
+        raise RuntimeError(
+            "The folder picker is not available on this system. Paste the folder path instead."
+        )
+
     script = r"""
 Add-Type -AssemblyName System.Windows.Forms
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
