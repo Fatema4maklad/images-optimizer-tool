@@ -3,7 +3,8 @@
 The local app listens on `http://127.0.0.1:8765`. Its interactive OpenAPI
 documentation is at `/docs`, and the machine-readable schema is at
 `/openapi.json`. This API saves to the filesystem of the machine running the
-server. It is not a hosted, authenticated upload service.
+server. For uploads from another system, use the separate
+[hosted API](HOSTED.md).
 
 ## Endpoints
 
@@ -28,12 +29,12 @@ rejected.
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
 | `output_folder` | string path | Yes | — |
-| `entity_name` | string | Yes | — |
+| `entity_name` | project name | Yes | — |
 | `logo` | file | No | — |
 | `cover` | file | No | — |
 | `gallery` | repeated file | No | — |
 | `naming_language` | `english` or `arabic` | No | `english` |
-| `include_brand_prefix` | boolean | No | `true` |
+| `filename_prefix` | string | No | Empty (no prefix) |
 | `overwrite` | boolean | No | `false` |
 | `logo_alt`, `cover_alt` | string | No | Generated suggestion |
 | `gallery_alt` | JSON array of strings | No | `[]` |
@@ -41,7 +42,9 @@ rejected.
 An explicitly blank alt text remains blank. `gallery_alt` entries correspond
 to gallery files in upload order; missing entries receive suggestions. The
 response lists only images processed in this request, while its ZIP also
-includes any image files already in the entity folder and the merged SEO CSV.
+includes previously processed images tracked by the project's SEO CSV.
+`filename_prefix` is normalized to a safe slug: `My Brand` becomes `my-brand`.
+It prefixes image filenames, while the SEO CSV stays named for the project.
 
 ### Example with Python
 
@@ -59,6 +62,7 @@ with Path("cover.jpg").open("rb") as cover:
             "output_folder": r"C:\Images",
             "entity_name": "Riyadh Tech Summit",
             "naming_language": "english",
+            "filename_prefix": "my-brand",
         },
         files={"cover": ("cover.jpg", cover, "image/jpeg")},
         timeout=120,
@@ -83,6 +87,7 @@ input named `coverFile`:
 const data = new FormData();
 data.append("output_folder", "C:\\Images");
 data.append("entity_name", "Riyadh Tech Summit");
+data.append("filename_prefix", "my-brand");
 data.append("cover", coverFile, coverFile.name);
 
 const response = await fetch("/api/v1/process", { method: "POST", body: data });
@@ -105,7 +110,7 @@ On success, `POST /api/v1/process` returns `200` with:
   "download_url": "/api/v1/download/<token>",
   "images": [
     {
-      "filename": "ramworld-riyadh-tech-summit-cover.webp",
+      "filename": "my-brand-riyadh-tech-summit-cover.webp",
       "alt_text": "Riyadh Tech Summit cover",
       "original_bytes": 120000,
       "output_bytes": 42000,

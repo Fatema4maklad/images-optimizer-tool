@@ -1,4 +1,4 @@
-"""Local web application for the RAM World image optimization tool."""
+"""Local web application for the image SEO optimizer."""
 
 from __future__ import annotations
 
@@ -11,14 +11,15 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from ramworld_image_tool.api import legacy_router, router
+from image_seo_tool.api import legacy_router, router
+from image_seo_tool.version import __version__
 
 
 ROOT_DIR = Path(__file__).resolve().parent
 WEB_DIR = ROOT_DIR / "web"
 app = FastAPI(
-    title="RAM World Image Optimizer",
-    version="1.0.0",
+    title="Image SEO Optimizer",
+    version=__version__,
     description="Local image optimization API. See /docs for the versioned HTTP contract.",
 )
 app.mount("/assets", StaticFiles(directory=WEB_DIR), name="assets")
@@ -72,8 +73,8 @@ Add-Type -AssemblyName System.Windows.Forms
 $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
 $dialog.Description = 'Choose where processed image folders will be saved'
 $dialog.ShowNewFolderButton = $true
-if ($env:RAMWORLD_INITIAL_FOLDER -and (Test-Path -LiteralPath $env:RAMWORLD_INITIAL_FOLDER)) {
-    $dialog.SelectedPath = $env:RAMWORLD_INITIAL_FOLDER
+if ($env:IMAGE_SEO_INITIAL_FOLDER -and (Test-Path -LiteralPath $env:IMAGE_SEO_INITIAL_FOLDER)) {
+    $dialog.SelectedPath = $env:IMAGE_SEO_INITIAL_FOLDER
 }
 $owner = New-Object System.Windows.Forms.Form
 $owner.TopMost = $true
@@ -85,7 +86,7 @@ $owner.Dispose()
 $dialog.Dispose()
 """
     picker_environment = os.environ.copy()
-    picker_environment["RAMWORLD_INITIAL_FOLDER"] = initial_folder
+    picker_environment["IMAGE_SEO_INITIAL_FOLDER"] = initial_folder
     try:
         completed = subprocess.run(
             ["powershell.exe", "-NoProfile", "-STA", "-Command", script],

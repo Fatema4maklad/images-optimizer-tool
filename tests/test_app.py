@@ -23,15 +23,16 @@ def test_normal_web_interface_contains_in_field_previews_and_theme_switch() -> N
     response = client.get("/")
 
     assert response.status_code == 200
-    assert "RAM World Image Optimizer" in response.text
+    assert "Image SEO Optimizer" in response.text
     assert 'id="theme-toggle"' in response.text
-    assert 'name="include_brand_prefix"' in response.text
+    assert 'name="filename_prefix"' in response.text
+    assert 'Times New Roman' in client.get("/assets/styles.css").text
     assert 'id="logo-drop-zone"' in response.text
     assert 'class="preview-area"' in response.text
     assert 'data-add="gallery"' in response.text
     assert 'id="preview-dialog"' in response.text
     assert "SEO alt text" in response.text
-    assert "made by Eng. fatem ★" in response.text
+    assert "made by Eng. Fatem ★" in response.text
 
     css = client.get("/assets/styles.css")
     assert css.status_code == 200
@@ -44,7 +45,7 @@ def test_normal_web_interface_contains_in_field_previews_and_theme_switch() -> N
     assert javascript.status_code == 200
     assert "URL.createObjectURL" in javascript.text
     assert 'zone.classList.toggle("has-files"' in javascript.text
-    assert 'localStorage.setItem("ramworld-theme"' in javascript.text
+    assert 'localStorage.setItem("image-seo-tool-theme"' in javascript.text
     assert "data-remove-kind" in javascript.text
     assert "showImagePreview" in javascript.text
 
@@ -119,19 +120,19 @@ def test_process_endpoint_requires_a_valid_destination(tmp_path: Path) -> None:
     assert response.json()["detail"] == "Select a valid output folder."
 
 
-def test_process_endpoint_can_exclude_ramworld_prefix(tmp_path: Path) -> None:
+def test_process_endpoint_accepts_custom_prefix(tmp_path: Path) -> None:
     response = client.post(
         "/api/process",
         data={
             "output_folder": str(tmp_path),
             "entity_name": "Riyadh Forum",
             "naming_language": "english",
-            "include_brand_prefix": "false",
+            "filename_prefix": "My Brand",
         },
         files={"logo": ("logo.png", image_bytes(), "image/png")},
     )
 
     assert response.status_code == 200
     result = response.json()
-    assert result["images"][0]["filename"] == "riyadh-forum-logo.png"
+    assert result["images"][0]["filename"] == "my-brand-riyadh-forum-logo.png"
     assert Path(result["output_folder"], "riyadh-forum-image-seo.csv").is_file()

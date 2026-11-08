@@ -1,10 +1,12 @@
-"""RAM World image optimization tool."""
+"""Reusable image optimization and SEO naming tools."""
 
+from .version import __version__
 from .batch import (
     BatchResult,
     SeoMetadata,
     UploadedImage,
     process_uploaded_images,
+    save_processed_result,
     suggest_alt_text,
 )
 from .config import ToolConfig
@@ -14,8 +16,8 @@ from .naming import (
     NamingLanguage,
     build_filename,
     create_output_folder,
-    filename_prefix,
     slugify_name,
+    slugify_optional_prefix,
 )
 from .processor import (
     DEFAULT_SETTINGS,
@@ -27,6 +29,7 @@ from .processor import (
 )
 
 __all__ = [
+    "__version__",
     "BatchResult",
     "ToolConfig",
     "ProcessedAsset",
@@ -35,13 +38,14 @@ __all__ = [
     "SeoMetadata",
     "UploadedImage",
     "process_uploaded_images",
+    "save_processed_result",
     "suggest_alt_text",
     "ImageKind",
     "NamingLanguage",
     "build_filename",
     "create_output_folder",
-    "filename_prefix",
     "slugify_name",
+    "slugify_optional_prefix",
     "DEFAULT_SETTINGS",
     "OptimizationSettings",
     "ProcessedImage",

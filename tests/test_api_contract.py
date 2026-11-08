@@ -7,7 +7,8 @@ from fastapi import HTTPException, UploadFile
 from PIL import Image
 
 from app import app
-from ramworld_image_tool.api import download, legacy_router, process_images
+from image_seo_tool.api import download, legacy_router, process_images
+from image_seo_tool.version import __version__
 
 
 def _cover_bytes() -> bytes:
@@ -34,7 +35,7 @@ def test_openapi_documents_v1_and_hides_compatibility_routes() -> None:
     schema = app.openapi()
     paths = schema["paths"]
 
-    assert app.version == "1.0.0"
+    assert app.version == __version__
     assert "/api/v1/health" in paths
     assert "/api/v1/process" in paths
     assert "/api/v1/download/{token}" in paths
@@ -51,7 +52,7 @@ def test_versioned_handler_returns_documented_result_and_download(tmp_path: Path
         output_folder=str(tmp_path),
         entity_name="Example Event",
         naming_language="english",
-        include_brand_prefix=True,
+        filename_prefix="My Brand",
         overwrite=False,
         logo_alt="Example Event logo",
         cover_alt=None,
@@ -62,7 +63,7 @@ def test_versioned_handler_returns_documented_result_and_download(tmp_path: Path
     ))
 
     assert result.download_url.startswith("/api/v1/download/")
-    assert result.images[0].filename == "ramworld-example-event-logo.jpg"
+    assert result.images[0].filename == "my-brand-example-event-logo.jpg"
     assert result.images[0].alt_text == "Example Event logo"
     assert (tmp_path / "example-event" / result.images[0].filename).is_file()
     token = result.download_url.rsplit("/", 1)[1]
@@ -75,7 +76,7 @@ def test_versioned_handler_reports_bad_destination(tmp_path: Path) -> None:
             output_folder=str(tmp_path / "missing"),
             entity_name="Example Event",
             naming_language="english",
-            include_brand_prefix=True,
+            filename_prefix="",
             overwrite=False,
             logo_alt=None,
             cover_alt=None,

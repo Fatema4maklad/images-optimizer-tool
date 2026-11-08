@@ -3,14 +3,17 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ramworld-image-tool"
-version = "0.1.0"
-description = "Internal tool for optimizing and SEO-renaming company images."
+name = "image-seo-tool"
+version = "0.2.0"
+description = "Reusable image optimization and SEO-friendly naming for any project."
 requires-python = ">=3.11"
 dependencies = [
     "Pillow>=10",
     "python-slugify>=8",
 ]
+
+[project.urls]
+Repository = "https://github.com/Fatema4maklad/imgeas-SEO-enhancment-tool"
 
 [project.optional-dependencies]
 web = ["fastapi>=0.115", "python-multipart>=0.0.9", "uvicorn>=0.30"]

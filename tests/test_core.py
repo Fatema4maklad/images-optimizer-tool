@@ -4,7 +4,7 @@ from io import BytesIO
 import pytest
 from PIL import Image
 
-from ramworld_image_tool import (
+from image_seo_tool import (
     ImageKind,
     OptimizationSettings,
     ToolConfig,
@@ -38,7 +38,7 @@ def test_config_customizes_naming_dimensions_and_format(tmp_path) -> None:
     defaults = ToolConfig()
     config = replace(
         defaults,
-        prefixes={**defaults.prefixes, defaults.naming_language: "partner"},
+        filename_prefix="Partner Team",
         settings={**defaults.settings, ImageKind.COVER: OptimizationSettings(800, 800, 80)},
         target_formats={**defaults.target_formats, ImageKind.COVER: "JPEG"},
     )
@@ -46,11 +46,11 @@ def test_config_customizes_naming_dimensions_and_format(tmp_path) -> None:
     portable = process_images("Example Event", uploads, config=config)
     local = process_uploaded_images("Example Event", tmp_path, uploads, config=config)
 
-    assert portable.assets[0].filename == "partner-example-event-cover.jpg"
+    assert portable.assets[0].filename == "partner-team-example-event-cover.jpg"
     assert portable.assets[0].mime_type == "image/jpeg"
     assert portable.assets[0].output_size == (800, 400)
     assert local.images[0].output_path.read_bytes() == portable.assets[0].data
-    assert local.metadata_path.name == "partner-example-event-image-seo.csv"
+    assert local.metadata_path.name == "example-event-image-seo.csv"
 
 
 def test_config_is_validated_and_copies_input_mappings() -> None:
@@ -58,7 +58,10 @@ def test_config_is_validated_and_copies_input_mappings() -> None:
     with pytest.raises(ValueError, match="Invalid target format"):
         ToolConfig(target_formats=formats)
 
-    prefixes = dict(ToolConfig().prefixes)
-    config = ToolConfig(prefixes=prefixes)
-    prefixes[config.naming_language] = "changed"
-    assert config.prefixes[config.naming_language] == "ramworld"
+    with pytest.raises(ValueError, match="Prefix must contain"):
+        ToolConfig(filename_prefix="!!!")
+
+    labels = {language: dict(values) for language, values in ToolConfig().labels.items()}
+    config = ToolConfig(labels=labels)
+    labels[config.naming_language][ImageKind.COVER] = "changed"
+    assert config.labels[config.naming_language][ImageKind.COVER] == "cover"

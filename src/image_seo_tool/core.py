@@ -90,7 +90,7 @@ def suggest_alt_text(
 ) -> str:
     clean_name = " ".join(entity_name.split())
     if not clean_name:
-        raise ValueError("A company, event, or partner name is required.")
+        raise ValueError("A project name is required.")
     selected_language = language or (
         NamingLanguage.ARABIC if ARABIC_CHARACTER.search(clean_name) else NamingLanguage.ENGLISH
     )

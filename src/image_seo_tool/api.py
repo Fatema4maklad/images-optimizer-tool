@@ -5,7 +5,6 @@ This module is optional: importing the processing core does not require FastAPI.
 
 from __future__ import annotations
 
-import json
 from collections import OrderedDict
 from io import BytesIO
 from pathlib import Path
@@ -15,9 +14,11 @@ from uuid import uuid4
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
+from .api_models import ErrorResponse, HealthResponse, ImageSummary
 from .batch import UploadedImage, process_uploaded_images
+from .http_common import parse_gallery_alt_texts, summarize_images
 from .naming import ImageKind, NamingLanguage, slugify_name
 
 
@@ -28,20 +29,6 @@ router = APIRouter(prefix="/api/v1", tags=["images"])
 legacy_router = APIRouter(include_in_schema=False)
 
 
-class ErrorResponse(BaseModel):
-    detail: str
-
-
-class ImageSummary(BaseModel):
-    filename: str
-    alt_text: str
-    original_bytes: int
-    output_bytes: int
-    original_size: tuple[int, int]
-    output_size: tuple[int, int]
-    reduction_percent: float
-
-
 class ProcessResponse(BaseModel):
     message: str
     output_folder: str
@@ -50,20 +37,6 @@ class ProcessResponse(BaseModel):
     reduction_percent: float
     download_url: str
     images: list[ImageSummary]
-
-
-class HealthResponse(BaseModel):
-    status: str
-
-
-def _parse_gallery_alt_texts(value: str) -> list[str]:
-    try:
-        parsed = json.loads(value or "[]")
-    except json.JSONDecodeError as exc:
-        raise ValueError("Gallery alt text data is invalid.") from exc
-    if not isinstance(parsed, list) or not all(isinstance(item, str) for item in parsed):
-        raise ValueError("Gallery alt text data is invalid.")
-    return parsed
 
 
 async def _to_uploaded_image(
@@ -103,9 +76,9 @@ def health() -> HealthResponse:
 @legacy_router.post("/api/process")
 async def process_images(
     output_folder: Annotated[str, Form(description="Existing folder on the machine running the API")],
-    entity_name: Annotated[str, Form(description="Event, company, or partner name")],
+    entity_name: Annotated[str, Form(description="Project, event, company, or partner name")],
     naming_language: Annotated[str, Form(description="english or arabic")] = "english",
-    include_brand_prefix: Annotated[bool, Form(description="Include the configured brand prefix in filenames")] = True,
+    filename_prefix: Annotated[str, Form(description="Optional custom prefix, such as a brand or project code")] = "",
     overwrite: Annotated[bool, Form(description="Replace images with matching generated filenames")] = False,
     logo_alt: Annotated[str | None, Form(description="Optional logo alt text; blank is allowed")] = None,
     cover_alt: Annotated[str | None, Form(description="Optional cover alt text; blank is allowed")] = None,
@@ -118,11 +91,11 @@ async def process_images(
     if not destination.is_dir():
         raise HTTPException(status_code=400, detail="Select a valid output folder.")
     if not entity_name.strip():
-        raise HTTPException(status_code=400, detail="Enter an event, company, or partner name.")
+        raise HTTPException(status_code=400, detail="Enter a project name.")
 
     try:
         language = NamingLanguage(naming_language)
-        gallery_alt_texts = _parse_gallery_alt_texts(gallery_alt)
+        gallery_alt_texts = parse_gallery_alt_texts(gallery_alt)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -143,7 +116,7 @@ async def process_images(
             destination,
             uploads,
             naming_language=language,
-            include_brand_prefix=include_brand_prefix,
+            filename_prefix=filename_prefix,
             overwrite=overwrite,
         )
     except (ValueError, FileExistsError, OSError) as exc:
@@ -154,19 +127,6 @@ async def process_images(
     while len(_downloads) > DOWNLOAD_LIMIT:
         _downloads.popitem(last=False)
 
-    metadata_by_name = {item.filename: item for item in result.seo_metadata}
-    images = [
-        ImageSummary(
-            filename=image.output_path.name,
-            alt_text=metadata_by_name[image.output_path.name].alt_text,
-            original_bytes=image.original_bytes,
-            output_bytes=image.output_bytes,
-            original_size=image.original_size,
-            output_size=image.output_size,
-            reduction_percent=image.reduction_percent,
-        )
-        for image in result.images
-    ]
     return ProcessResponse(
         message="Images have been saved successfully.",
         output_folder=str(result.output_folder.resolve()),
@@ -174,7 +134,7 @@ async def process_images(
         output_bytes=result.output_bytes,
         reduction_percent=result.reduction_percent,
         download_url=f"/api/v1/download/{token}",
-        images=images,
+        images=summarize_images(result),
     )
 
 

@@ -174,7 +174,7 @@ def optimize_image_bytes(
     gallery_index: int | None = None,
     settings: OptimizationSettings | None = None,
     naming_language: NamingLanguage = NamingLanguage.ENGLISH,
-    include_brand_prefix: bool = True,
+    filename_prefix: str = "",
     config: ToolConfig | None = None,
 ) -> tuple[str, bytes, tuple[int, int], tuple[int, int]]:
     """Optimize image bytes and return its filename, bytes, and dimensions."""
@@ -182,21 +182,22 @@ def optimize_image_bytes(
         raise ValueError("The uploaded image is empty.")
 
     selected_config = config or ToolConfig(
-        naming_language=naming_language, include_brand_prefix=include_brand_prefix
+        naming_language=naming_language, filename_prefix=filename_prefix
     )
     selected_settings = settings or selected_config.settings[image_kind]
 
     svg_root = _svg_root(image_data)
     if svg_root is not None:
         original_size = _svg_dimensions(svg_root)
+        if selected_config.max_pixels is not None and math.prod(original_size) > selected_config.max_pixels:
+            raise ValueError("The image exceeds the maximum pixel count.")
         filename = build_filename(
             entity_name,
             image_kind,
             SUPPORTED_FORMATS["SVG"],
             gallery_index,
             language=selected_config.naming_language,
-            include_brand_prefix=selected_config.include_brand_prefix,
-            prefix=selected_config.prefixes[selected_config.naming_language],
+            prefix=selected_config.filename_prefix,
             labels=selected_config.labels[selected_config.naming_language],
         )
         return filename, image_data, original_size, original_size
@@ -211,6 +212,8 @@ def optimize_image_bytes(
                 raise ValueError("Animated images are not supported.")
 
             original_size = source.size
+            if selected_config.max_pixels is not None and math.prod(original_size) > selected_config.max_pixels:
+                raise ValueError("The image exceeds the maximum pixel count.")
             configured_format = selected_config.target_formats[image_kind]
             target_format = image_format if configured_format == "original" else configured_format
             exif_orientation = source.getexif().get(274, 1)
@@ -229,14 +232,15 @@ def optimize_image_bytes(
                 selected_settings.quality,
                 icc_profile,
             )
-    except (UnidentifiedImageError, OSError) as exc:
+    except (UnidentifiedImageError, Image.DecompressionBombError, OSError) as exc:
         raise ValueError("The uploaded file is not a valid supported image.") from exc
 
     was_resized = output_size != oriented_size
     was_rotated = exif_orientation != 1
     format_changed = target_format != image_format
     if (
-        not format_changed
+        selected_config.preserve_original_bytes
+        and not format_changed
         and not was_resized
         and not was_rotated
         and len(encoded) >= len(image_data)
@@ -249,8 +253,7 @@ def optimize_image_bytes(
         SUPPORTED_FORMATS[target_format],
         gallery_index,
         language=selected_config.naming_language,
-        include_brand_prefix=selected_config.include_brand_prefix,
-        prefix=selected_config.prefixes[selected_config.naming_language],
+        prefix=selected_config.filename_prefix,
         labels=selected_config.labels[selected_config.naming_language],
     )
     return filename, encoded, original_size, output_size
@@ -265,7 +268,7 @@ def process_image_file(
     gallery_index: int | None = None,
     settings: OptimizationSettings | None = None,
     naming_language: NamingLanguage = NamingLanguage.ENGLISH,
-    include_brand_prefix: bool = True,
+    filename_prefix: str = "",
     overwrite: bool = False,
     config: ToolConfig | None = None,
 ) -> ProcessedImage:
@@ -282,7 +285,7 @@ def process_image_file(
         gallery_index=gallery_index,
         settings=settings,
         naming_language=naming_language,
-        include_brand_prefix=include_brand_prefix,
+        filename_prefix=filename_prefix,
         config=config,
     )
 
@@ -309,7 +312,7 @@ def process_image_set(
     cover: Path | None = None,
     gallery: Sequence[Path] = (),
     naming_language: NamingLanguage = NamingLanguage.ENGLISH,
-    include_brand_prefix: bool = True,
+    filename_prefix: str = "",
     overwrite: bool = False,
     config: ToolConfig | None = None,
 ) -> list[ProcessedImage]:
@@ -328,7 +331,7 @@ def process_image_set(
                 entity_name,
                 ImageKind.LOGO,
                 naming_language=naming_language,
-                include_brand_prefix=include_brand_prefix,
+                filename_prefix=filename_prefix,
                 overwrite=overwrite,
                 config=config,
             )
@@ -341,7 +344,7 @@ def process_image_set(
                 entity_name,
                 ImageKind.COVER,
                 naming_language=naming_language,
-                include_brand_prefix=include_brand_prefix,
+                filename_prefix=filename_prefix,
                 overwrite=overwrite,
                 config=config,
             )
@@ -355,7 +358,7 @@ def process_image_set(
                 ImageKind.GALLERY,
                 gallery_index=index,
                 naming_language=naming_language,
-                include_brand_prefix=include_brand_prefix,
+                filename_prefix=filename_prefix,
                 overwrite=overwrite,
                 config=config,
             )

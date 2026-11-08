@@ -22,11 +22,6 @@ class NamingLanguage(StrEnum):
     ARABIC = "arabic"
 
 
-FILENAME_PREFIXES = {
-    NamingLanguage.ENGLISH: "ramworld",
-    NamingLanguage.ARABIC: "عالم-رام",
-}
-
 IMAGE_KIND_LABELS = {
     NamingLanguage.ENGLISH: {
         ImageKind.LOGO: "logo",
@@ -41,22 +36,29 @@ IMAGE_KIND_LABELS = {
 }
 
 
-def filename_prefix(language: NamingLanguage = NamingLanguage.ENGLISH) -> str:
-    """Return the brand prefix used by the selected naming language."""
-    return FILENAME_PREFIXES[NamingLanguage(language)]
-
-
 def slugify_name(name: str) -> str:
-    """Convert an event, company, or partner name into a safe URL-style slug."""
+    """Convert a project name into a readable, filesystem-safe slug."""
     cleaned_name = name.strip()
     if not cleaned_name:
-        raise ValueError("A company, event, or partner name is required.")
+        raise ValueError("A project name is required.")
 
     # Keep localized words readable for the target audience. Latin text is
     # still normalized to lowercase, while Arabic remains Arabic.
     slug = slugify(cleaned_name, lowercase=True, allow_unicode=True)
     if not slug:
         raise ValueError("The name must contain letters or numbers.")
+    return slug
+
+
+def slugify_optional_prefix(prefix: str) -> str:
+    """Normalize a user-provided prefix; an empty value means no prefix."""
+    if not isinstance(prefix, str):
+        raise ValueError("Prefix must be text.")
+    if not prefix.strip():
+        return ""
+    slug = slugify(prefix.strip(), lowercase=True, allow_unicode=True)
+    if not slug:
+        raise ValueError("Prefix must contain letters or numbers.")
     return slug
 
 
@@ -74,8 +76,7 @@ def build_filename(
     gallery_index: int | None = None,
     *,
     language: NamingLanguage = NamingLanguage.ENGLISH,
-    include_brand_prefix: bool = True,
-    prefix: str | None = None,
+    prefix: str = "",
     labels: Mapping[ImageKind, str] | None = None,
 ) -> str:
     """Build a consistent SEO filename for an uploaded image."""
@@ -86,8 +87,9 @@ def build_filename(
     selected_language = NamingLanguage(language)
     selected_labels = labels if labels is not None else IMAGE_KIND_LABELS[selected_language]
     name_parts = [slugify_name(name), selected_labels[image_kind]]
-    if include_brand_prefix:
-        name_parts.insert(0, prefix if prefix is not None else filename_prefix(selected_language))
+    normalized_prefix = slugify_optional_prefix(prefix)
+    if normalized_prefix:
+        name_parts.insert(0, normalized_prefix)
     base_name = "-".join(name_parts)
 
     if image_kind is ImageKind.GALLERY:

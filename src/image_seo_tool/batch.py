@@ -9,7 +9,7 @@ from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
 from .config import ToolConfig
-from .core import SeoMetadata, UploadedImage, process_images, suggest_alt_text
+from .core import ProcessingResult, SeoMetadata, UploadedImage, process_images, suggest_alt_text
 from .naming import ImageKind, NamingLanguage
 from .processor import ProcessedImage
 
@@ -83,15 +83,25 @@ def process_uploaded_images(
     uploads: list[UploadedImage],
     *,
     naming_language: NamingLanguage = NamingLanguage.ENGLISH,
-    include_brand_prefix: bool = True,
+    filename_prefix: str = "",
     overwrite: bool = False,
     config: ToolConfig | None = None,
 ) -> BatchResult:
-    """Save a core result locally, merge SEO metadata, and prepare a ZIP."""
+    """Process uploads and save the result locally."""
     selected_config = config or ToolConfig(
-        naming_language=naming_language, include_brand_prefix=include_brand_prefix
+        naming_language=naming_language, filename_prefix=filename_prefix
     )
     processed = process_images(entity_name, uploads, config=selected_config)
+    return save_processed_result(processed, output_root, overwrite=overwrite)
+
+
+def save_processed_result(
+    processed: ProcessingResult,
+    output_root: Path,
+    *,
+    overwrite: bool = False,
+) -> BatchResult:
+    """Local storage adapter shared by the desktop and hosted applications."""
     output_folder = Path(output_root) / processed.slug
     collisions = [
         asset.filename for asset in processed.assets
@@ -115,11 +125,7 @@ def process_uploaded_images(
             output_size=asset.output_size,
         ))
 
-    metadata_base = (
-        f"{selected_config.prefixes[selected_config.naming_language]}-{processed.slug}"
-        if selected_config.include_brand_prefix else processed.slug
-    )
-    metadata_path = output_folder / f"{metadata_base}-image-seo.csv"
+    metadata_path = output_folder / f"{processed.slug}-image-seo.csv"
     metadata_by_filename = {
         entry.filename: entry for entry in _read_metadata(metadata_path)
     }
@@ -128,8 +134,11 @@ def process_uploaded_images(
     })
     image_extensions = {".jpg", ".jpeg", ".png", ".webp", ".svg"}
     saved_images = sorted(
-        path for path in output_folder.iterdir()
-        if path.is_file() and path.suffix.lower() in image_extensions
+        output_folder / filename
+        for filename in metadata_by_filename
+        if Path(filename).name == filename
+        and (output_folder / filename).is_file()
+        and Path(filename).suffix.lower() in image_extensions
     )
     saved_filenames = {path.name for path in saved_images}
     kind_order = {ImageKind.LOGO: 0, ImageKind.COVER: 1, ImageKind.GALLERY: 2}

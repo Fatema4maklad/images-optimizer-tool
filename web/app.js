@@ -216,7 +216,7 @@ form.addEventListener("submit", async event => {
   data.append("output_folder", outputFolder.value.trim());
   data.append("entity_name", entityName.value.trim());
   data.append("naming_language", language());
-  data.append("include_brand_prefix", document.querySelector('input[name="include_brand_prefix"]:checked').value);
+  data.append("filename_prefix", document.querySelector("#filename-prefix").value.trim());
   data.append("overwrite", document.querySelector("#overwrite").checked ? "true" : "false");
   if (state.logo.length) {
     data.append("logo", state.logo[0]);
@@ -288,14 +288,14 @@ previewDialog.addEventListener("click", event => {
 });
 
 const themeToggle = document.querySelector("#theme-toggle");
-const savedTheme = localStorage.getItem("ramworld-theme");
+const savedTheme = localStorage.getItem("image-seo-tool-theme");
 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 themeToggle.checked = savedTheme ? savedTheme === "dark" : prefersDark;
 document.documentElement.dataset.theme = themeToggle.checked ? "dark" : "light";
 themeToggle.addEventListener("change", () => {
   const selected = themeToggle.checked ? "dark" : "light";
   document.documentElement.dataset.theme = selected;
-  localStorage.setItem("ramworld-theme", selected);
+  localStorage.setItem("image-seo-tool-theme", selected);
 });
 
 updateFormState();

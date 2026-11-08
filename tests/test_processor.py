@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from ramworld_image_tool.naming import ImageKind, NamingLanguage
-from ramworld_image_tool.processor import (
+from image_seo_tool.naming import ImageKind, NamingLanguage
+from image_seo_tool.processor import (
     OptimizationSettings,
     optimize_image_bytes,
     process_image_set,
@@ -35,7 +35,7 @@ def test_cover_uses_event_name_and_is_resized() -> None:
         settings=OptimizationSettings(1200, 600),
     )
 
-    assert filename == "ramworld-riyadh-tech-summit-cover.webp"
+    assert filename == "riyadh-tech-summit-cover.webp"
     assert original_size == (2400, 1600)
     assert output_size == (900, 600)
     with Image.open(BytesIO(output)) as result:
@@ -62,7 +62,7 @@ def test_svg_logo_stays_svg() -> None:
         source, "Partner Name", ImageKind.LOGO
     )
 
-    assert filename == "ramworld-partner-name-logo.svg"
+    assert filename == "partner-name-logo.svg"
     assert output == source
     assert original_size == (800, 400)
     assert output_size == original_size
@@ -77,7 +77,7 @@ def test_svg_cover_stays_svg() -> None:
         settings=OptimizationSettings(1200, 600),
     )
 
-    assert filename == "ramworld-riyadh-tech-summit-cover.svg"
+    assert filename == "riyadh-tech-summit-cover.svg"
     assert output == source
     assert original_size == (2400, 1600)
     assert output_size == original_size
@@ -94,7 +94,7 @@ def test_processor_uses_selected_arabic_naming_language() -> None:
         naming_language=NamingLanguage.ARABIC,
     )
 
-    assert filename == "عالم-رام-منتدى-الرياض-الاقتصادي-الغلاف.webp"
+    assert filename == "منتدى-الرياض-الاقتصادي-الغلاف.webp"
 
 
 def test_image_set_uses_one_folder_and_numbers_gallery(tmp_path: Path) -> None:
@@ -118,10 +118,10 @@ def test_image_set_uses_one_folder_and_numbers_gallery(tmp_path: Path) -> None:
     output_folders = {result.output_path.parent for result in results}
     assert output_folders == {tmp_path / "output" / "riyadh-tech-summit"}
     assert [result.output_path.name for result in results] == [
-        "ramworld-riyadh-tech-summit-logo.png",
-        "ramworld-riyadh-tech-summit-cover.webp",
-        "ramworld-riyadh-tech-summit-gallery-01.webp",
-        "ramworld-riyadh-tech-summit-gallery-02.webp",
+        "riyadh-tech-summit-logo.png",
+        "riyadh-tech-summit-cover.webp",
+        "riyadh-tech-summit-gallery-01.webp",
+        "riyadh-tech-summit-gallery-02.webp",
     ]
 
 

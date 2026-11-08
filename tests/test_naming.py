@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from ramworld_image_tool.naming import (
+from image_seo_tool.naming import (
     ImageKind,
     NamingLanguage,
     build_filename,
@@ -19,7 +19,7 @@ def test_slugify_name_preserves_arabic() -> None:
     assert slugify_name("منتدى الرياض الاقتصادي") == "منتدى-الرياض-الاقتصادي"
 
 
-def test_arabic_naming_language_uses_localized_brand_and_type() -> None:
+def test_arabic_naming_language_uses_localized_type() -> None:
     assert (
         build_filename(
             "منتدى الرياض الاقتصادي",
@@ -27,7 +27,7 @@ def test_arabic_naming_language_uses_localized_brand_and_type() -> None:
             "webp",
             language=NamingLanguage.ARABIC,
         )
-        == "عالم-رام-منتدى-الرياض-الاقتصادي-الغلاف.webp"
+        == "منتدى-الرياض-الاقتصادي-الغلاف.webp"
     )
 
 
@@ -40,7 +40,7 @@ def test_arabic_gallery_filename_is_numbered() -> None:
             2,
             language=NamingLanguage.ARABIC,
         )
-        == "عالم-رام-منتدى-الرياض-الاقتصادي-صور-02.webp"
+        == "منتدى-الرياض-الاقتصادي-صور-02.webp"
     )
 
 
@@ -52,47 +52,47 @@ def test_arabic_logo_filename_uses_shiar_label() -> None:
             "png",
             language=NamingLanguage.ARABIC,
         )
-        == "عالم-رام-شركة-الرياض-شعار.png"
+        == "شركة-الرياض-شعار.png"
     )
 
 
 def test_build_logo_filename() -> None:
     assert (
         build_filename("Al Riyadh Company", ImageKind.LOGO, ".PNG")
-        == "ramworld-al-riyadh-company-logo.png"
+        == "al-riyadh-company-logo.png"
     )
 
 
 def test_build_numbered_gallery_filename() -> None:
     assert (
         build_filename("Al Riyadh Company", ImageKind.GALLERY, "webp", 3)
-        == "ramworld-al-riyadh-company-gallery-03.webp"
+        == "al-riyadh-company-gallery-03.webp"
     )
 
 
-def test_build_filename_can_exclude_brand_prefix() -> None:
+def test_build_filename_normalizes_custom_prefix() -> None:
     assert (
         build_filename(
             "Al Riyadh Company",
             ImageKind.GALLERY,
             "webp",
             3,
-            include_brand_prefix=False,
+            prefix="My Brand",
         )
-        == "al-riyadh-company-gallery-03.webp"
+        == "my-brand-al-riyadh-company-gallery-03.webp"
     )
 
 
-def test_arabic_filename_can_exclude_brand_prefix() -> None:
+def test_arabic_filename_accepts_custom_prefix() -> None:
     assert (
         build_filename(
             "منتدى الرياض الاقتصادي",
             ImageKind.COVER,
             "webp",
             language=NamingLanguage.ARABIC,
-            include_brand_prefix=False,
+            prefix="شركتي",
         )
-        == "منتدى-الرياض-الاقتصادي-الغلاف.webp"
+        == "شركتي-منتدى-الرياض-الاقتصادي-الغلاف.webp"
     )
 
 
