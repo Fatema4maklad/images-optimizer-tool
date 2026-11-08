@@ -235,7 +235,7 @@ form.addEventListener("submit", async event => {
   statusMessage.className = "status-message";
   statusMessage.textContent = "Optimizing and saving your images…";
   try {
-    const response = await fetch("/api/process", { method: "POST", body: data });
+    const response = await fetch("/api/v1/process", { method: "POST", body: data });
     const result = await response.json();
     if (!response.ok) throw new Error(result.detail || "The images could not be processed.");
     showResults(result);

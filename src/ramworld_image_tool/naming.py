@@ -2,6 +2,7 @@
 
 from enum import StrEnum
 from pathlib import Path
+from typing import Mapping
 
 from slugify import slugify
 
@@ -74,6 +75,8 @@ def build_filename(
     *,
     language: NamingLanguage = NamingLanguage.ENGLISH,
     include_brand_prefix: bool = True,
+    prefix: str | None = None,
+    labels: Mapping[ImageKind, str] | None = None,
 ) -> str:
     """Build a consistent SEO filename for an uploaded image."""
     normalized_extension = extension.lower().lstrip(".")
@@ -81,10 +84,10 @@ def build_filename(
         raise ValueError("An image extension is required.")
 
     selected_language = NamingLanguage(language)
-    selected_labels = IMAGE_KIND_LABELS[selected_language]
+    selected_labels = labels if labels is not None else IMAGE_KIND_LABELS[selected_language]
     name_parts = [slugify_name(name), selected_labels[image_kind]]
     if include_brand_prefix:
-        name_parts.insert(0, filename_prefix(selected_language))
+        name_parts.insert(0, prefix if prefix is not None else filename_prefix(selected_language))
     base_name = "-".join(name_parts)
 
     if image_kind is ImageKind.GALLERY:

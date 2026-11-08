@@ -29,7 +29,7 @@ if [ ! -x "$MAC_PYTHON" ]; then
     echo "First-time setup: preparing the app..."
     python3 -m venv "$MAC_ENV" || fail "The Python environment could not be created."
     "$MAC_PYTHON" -m pip install --upgrade pip || fail "pip could not be updated. Check the internet connection."
-    "$MAC_PYTHON" -m pip install -e . || fail "The app dependencies could not be installed. Check the internet connection."
+    "$MAC_PYTHON" -m pip install -e ".[web]" || fail "The app dependencies could not be installed. Check the internet connection."
 fi
 
 (sleep 2; open "http://127.0.0.1:8765/?app=ramworld-mac") &

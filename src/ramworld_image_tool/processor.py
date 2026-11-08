@@ -12,6 +12,7 @@ from xml.etree import ElementTree
 
 from PIL import Image, ImageOps, UnidentifiedImageError
 
+from .config import DEFAULT_SETTINGS, OptimizationSettings, ToolConfig
 from .naming import (
     ImageKind,
     NamingLanguage,
@@ -40,28 +41,6 @@ SVG_UNIT_TO_PIXELS = {
     "mm": 96.0 / 25.4,
     "pt": 96.0 / 72.0,
     "pc": 16.0,
-}
-
-
-@dataclass(frozen=True, slots=True)
-class OptimizationSettings:
-    """Output limits and quality settings for one image category."""
-
-    max_width: int
-    max_height: int
-    quality: int = 90
-
-    def __post_init__(self) -> None:
-        if self.max_width < 1 or self.max_height < 1:
-            raise ValueError("Maximum image dimensions must be positive.")
-        if not 1 <= self.quality <= 100:
-            raise ValueError("Image quality must be between 1 and 100.")
-
-
-DEFAULT_SETTINGS = {
-    ImageKind.LOGO: OptimizationSettings(1200, 1200, 95),
-    ImageKind.COVER: OptimizationSettings(1920, 1080, 88),
-    ImageKind.GALLERY: OptimizationSettings(1920, 1920, 88),
 }
 
 
@@ -196,12 +175,16 @@ def optimize_image_bytes(
     settings: OptimizationSettings | None = None,
     naming_language: NamingLanguage = NamingLanguage.ENGLISH,
     include_brand_prefix: bool = True,
+    config: ToolConfig | None = None,
 ) -> tuple[str, bytes, tuple[int, int], tuple[int, int]]:
     """Optimize image bytes and return its filename, bytes, and dimensions."""
     if not image_data:
         raise ValueError("The uploaded image is empty.")
 
-    selected_settings = settings or DEFAULT_SETTINGS[image_kind]
+    selected_config = config or ToolConfig(
+        naming_language=naming_language, include_brand_prefix=include_brand_prefix
+    )
+    selected_settings = settings or selected_config.settings[image_kind]
 
     svg_root = _svg_root(image_data)
     if svg_root is not None:
@@ -211,8 +194,10 @@ def optimize_image_bytes(
             image_kind,
             SUPPORTED_FORMATS["SVG"],
             gallery_index,
-            language=naming_language,
-            include_brand_prefix=include_brand_prefix,
+            language=selected_config.naming_language,
+            include_brand_prefix=selected_config.include_brand_prefix,
+            prefix=selected_config.prefixes[selected_config.naming_language],
+            labels=selected_config.labels[selected_config.naming_language],
         )
         return filename, image_data, original_size, original_size
 
@@ -226,9 +211,8 @@ def optimize_image_bytes(
                 raise ValueError("Animated images are not supported.")
 
             original_size = source.size
-            target_format = (
-                image_format if image_kind is ImageKind.LOGO else "WEBP"
-            )
+            configured_format = selected_config.target_formats[image_kind]
+            target_format = image_format if configured_format == "original" else configured_format
             exif_orientation = source.getexif().get(274, 1)
             icc_profile = source.info.get("icc_profile")
             optimized = ImageOps.exif_transpose(source)
@@ -264,8 +248,10 @@ def optimize_image_bytes(
         image_kind,
         SUPPORTED_FORMATS[target_format],
         gallery_index,
-        language=naming_language,
-        include_brand_prefix=include_brand_prefix,
+        language=selected_config.naming_language,
+        include_brand_prefix=selected_config.include_brand_prefix,
+        prefix=selected_config.prefixes[selected_config.naming_language],
+        labels=selected_config.labels[selected_config.naming_language],
     )
     return filename, encoded, original_size, output_size
 
@@ -281,6 +267,7 @@ def process_image_file(
     naming_language: NamingLanguage = NamingLanguage.ENGLISH,
     include_brand_prefix: bool = True,
     overwrite: bool = False,
+    config: ToolConfig | None = None,
 ) -> ProcessedImage:
     """Process one image and write it into an existing entity folder."""
     input_path = Path(input_path)
@@ -296,6 +283,7 @@ def process_image_file(
         settings=settings,
         naming_language=naming_language,
         include_brand_prefix=include_brand_prefix,
+        config=config,
     )
 
     output_path = Path(output_folder) / filename
@@ -323,6 +311,7 @@ def process_image_set(
     naming_language: NamingLanguage = NamingLanguage.ENGLISH,
     include_brand_prefix: bool = True,
     overwrite: bool = False,
+    config: ToolConfig | None = None,
 ) -> list[ProcessedImage]:
     """Process all supplied images into one folder for an event or organization."""
     if logo is None and cover is None and not gallery:
@@ -341,6 +330,7 @@ def process_image_set(
                 naming_language=naming_language,
                 include_brand_prefix=include_brand_prefix,
                 overwrite=overwrite,
+                config=config,
             )
         )
     if cover is not None:
@@ -353,6 +343,7 @@ def process_image_set(
                 naming_language=naming_language,
                 include_brand_prefix=include_brand_prefix,
                 overwrite=overwrite,
+                config=config,
             )
         )
     for index, gallery_image in enumerate(gallery, start=1):
@@ -366,6 +357,7 @@ def process_image_set(
                 naming_language=naming_language,
                 include_brand_prefix=include_brand_prefix,
                 overwrite=overwrite,
+                config=config,
             )
         )
 

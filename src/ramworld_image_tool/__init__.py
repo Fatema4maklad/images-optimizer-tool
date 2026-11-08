@@ -7,6 +7,8 @@ from .batch import (
     process_uploaded_images,
     suggest_alt_text,
 )
+from .config import ToolConfig
+from .core import ProcessedAsset, ProcessingResult, process_images
 from .naming import (
     ImageKind,
     NamingLanguage,
@@ -26,6 +28,10 @@ from .processor import (
 
 __all__ = [
     "BatchResult",
+    "ToolConfig",
+    "ProcessedAsset",
+    "ProcessingResult",
+    "process_images",
     "SeoMetadata",
     "UploadedImage",
     "process_uploaded_images",

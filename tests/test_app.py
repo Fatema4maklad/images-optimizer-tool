@@ -56,7 +56,7 @@ def test_mac_launcher_bootstraps_and_starts_the_app() -> None:
     assert contents.startswith("#!/bin/bash")
     assert 'MAC_ENV=".venv-mac"' in contents
     assert "python3 -m venv" in contents
-    assert "pip install -e ." in contents
+    assert 'pip install -e ".[web]"' in contents
     assert "open \"http://127.0.0.1:8765/" in contents
 
 
@@ -70,7 +70,7 @@ def test_mac_folder_picker_uses_osascript(monkeypatch) -> None:
 
 def test_process_endpoint_saves_and_returns_download(tmp_path: Path) -> None:
     response = client.post(
-        "/api/process",
+        "/api/v1/process",
         data={
             "output_folder": str(tmp_path),
             "entity_name": "Riyadh Forum",
@@ -107,7 +107,7 @@ def test_process_endpoint_saves_and_returns_download(tmp_path: Path) -> None:
 
 def test_process_endpoint_requires_a_valid_destination(tmp_path: Path) -> None:
     response = client.post(
-        "/api/process",
+        "/api/v1/process",
         data={
             "output_folder": str(tmp_path / "missing"),
             "entity_name": "Event",

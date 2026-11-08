@@ -3,6 +3,56 @@
 An internal Python application for optimizing company, event, and partner images,
 renaming them consistently, and placing them in one easy-to-access folder.
 
+## Integrate the processing core
+
+The installable Python package needs Python 3.11+, Pillow, and python-slugify.
+Install `.[web]` when you also want the FastAPI local interface, or `.[dev]`
+to run its tests. The image core itself does not import FastAPI.
+
+`process_images` accepts uploaded bytes and returns a `ProcessingResult` without
+writing files. Each asset contains its final filename, bytes, MIME type, alt
+text, source name, dimensions, and size statistics. The result also contains
+the entity slug and SEO metadata. A host application can store the bytes in
+its own media library or object storage:
+
+```python
+from ramworld_image_tool import ImageKind, UploadedImage, process_images
+
+result = process_images(
+    "Riyadh Tech Summit",
+    [UploadedImage("cover.jpg", uploaded_bytes, ImageKind.COVER)],
+)
+for asset in result.assets:
+    media_library.save(asset.filename, asset.data, content_type=asset.mime_type)
+```
+
+`ToolConfig` controls filename language, brand prefixes, image labels, maximum
+dimensions, quality, and output format per image category. The defaults match
+the current RAM World behavior. For example:
+
+```python
+from dataclasses import replace
+from ramworld_image_tool import ImageKind, OptimizationSettings, ToolConfig
+
+default = ToolConfig()
+custom = replace(
+    default,
+    prefixes={**default.prefixes, default.naming_language: "mybrand"},
+    settings={
+        **default.settings,
+        ImageKind.COVER: OptimizationSettings(1600, 900, 85),
+    },
+)
+```
+
+`target_formats` accepts `"original"`, `"JPEG"`, `"PNG"`, or `"WEBP"` per
+category. SVG input remains SVG. The local app uses `process_uploaded_images`,
+which calls the same core, saves files, merges its SEO CSV, and builds a ZIP.
+`process_image_file` and `process_image_set` also accept `config=` for local
+file workflows. The existing local UI still uses the default processing rules.
+
+For HTTP integrations, see the [local API v1 contract](docs/API.md).
+
 ## Output convention
 
 For an input name such as `Al Riyadh Company`, the tool creates:
