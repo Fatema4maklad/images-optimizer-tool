@@ -24,6 +24,7 @@ def test_normal_web_interface_contains_in_field_previews_and_theme_switch() -> N
 
     assert response.status_code == 200
     assert "Image SEO Optimizer" in response.text
+    assert "The project name appears in every filename." in response.text
     assert 'id="theme-toggle"' in response.text
     assert 'name="filename_prefix"' in response.text
     assert 'Times New Roman' in client.get("/assets/styles.css").text
@@ -69,6 +70,37 @@ def test_mac_folder_picker_uses_osascript(monkeypatch) -> None:
     assert app_module._pick_output_folder() == "/Users/shooq/Pictures/"
 
 
+def test_windows_folder_picker_uses_modern_dialog_script(monkeypatch) -> None:
+    calls = []
+
+    def run(command, **kwargs):
+        calls.append((command, kwargs))
+        return SimpleNamespace(returncode=0, stdout="C:\\Pictures\n", stderr="")
+
+    monkeypatch.setattr(app_module.sys, "platform", "win32")
+    monkeypatch.setattr(app_module.subprocess, "run", run)
+
+    assert app_module._pick_output_folder("C:\\Users\\Fatem") == "C:\\Pictures"
+    command, kwargs = calls[0]
+    assert command[-2:] == [
+        "-File",
+        str(app_module.ROOT_DIR / "scripts" / "windows_folder_picker.ps1"),
+    ]
+    assert kwargs["env"]["IMAGE_SEO_INITIAL_FOLDER"] == "C:\\Users\\Fatem"
+    assert "PickFolders = 0x20" in Path(command[-1]).read_text(encoding="utf-8")
+
+
+def test_windows_folder_picker_cancel_returns_no_path(monkeypatch) -> None:
+    monkeypatch.setattr(app_module.sys, "platform", "win32")
+    monkeypatch.setattr(
+        app_module.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout="", stderr=""),
+    )
+
+    assert app_module._pick_output_folder() is None
+
+
 def test_process_endpoint_saves_and_returns_download(tmp_path: Path) -> None:
     response = client.post(
         "/api/v1/process",
@@ -92,9 +124,13 @@ def test_process_endpoint_saves_and_returns_download(tmp_path: Path) -> None:
     result = response.json()
     assert result["message"] == "Images have been saved successfully."
     assert len(result["images"]) == 3
-    assert result["images"][0]["filename"].endswith("-logo.png")
-    assert result["images"][1]["filename"].endswith("-cover.webp")
-    assert result["images"][2]["filename"].endswith("-gallery-01.webp")
+    assert [image["filename"] for image in result["images"]] == [
+        "riyadh-forum-logo.png",
+        "riyadh-forum-cover.webp",
+        "riyadh-forum-gallery-01.webp",
+    ]
+    assert Path(result["output_folder"]).name == "riyadh-forum"
+    assert Path(result["output_folder"], "riyadh-forum-image-seo.csv").is_file()
     assert Path(result["output_folder"]).is_dir()
 
     download = client.get(result["download_url"])
@@ -136,3 +172,21 @@ def test_process_endpoint_accepts_custom_prefix(tmp_path: Path) -> None:
     result = response.json()
     assert result["images"][0]["filename"] == "my-brand-riyadh-forum-logo.png"
     assert Path(result["output_folder"], "riyadh-forum-image-seo.csv").is_file()
+
+
+def test_process_endpoint_uses_only_project_name_when_prefix_is_blank(tmp_path: Path) -> None:
+    response = client.post(
+        "/api/v1/process",
+        data={
+            "output_folder": str(tmp_path),
+            "entity_name": "Testing",
+            "filename_prefix": "",
+        },
+        files={"logo": ("logo.png", image_bytes(), "image/png")},
+    )
+
+    assert response.status_code == 200
+    result = response.json()
+    assert Path(result["output_folder"]).name == "testing"
+    assert [image["filename"] for image in result["images"]] == ["testing-logo.png"]
+    assert Path(result["output_folder"], "testing-image-seo.csv").is_file()

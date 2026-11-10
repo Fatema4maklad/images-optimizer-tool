@@ -57,6 +57,11 @@ Then double-click `start_app.bat`. It opens the local browser interface at
 `http://127.0.0.1:8765`. Choose an existing destination folder, enter a
 project name, add a logo, cover, and/or gallery images, then optimize. Results
 are saved in a project folder and can also be downloaded as a ZIP.
+On Windows, **Browse** opens the standard Explorer folder picker. You can also
+paste a destination folder path into the field.
+The project name is included in the output folder, image names, and metadata CSV.
+The optional filename prefix is added only when you enter one. Existing files
+from earlier runs remain in the same project folder.
 
 On macOS, double-click `start_app.command`. The first launch creates a separate
 environment and installs the web dependencies. If macOS says the launcher is

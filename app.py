@@ -67,29 +67,19 @@ def _pick_output_folder(initial_folder: str = "") -> str | None:
             "The folder picker is not available on this system. Paste the folder path instead."
         )
 
-    script = r"""
-Add-Type -AssemblyName System.Windows.Forms
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$dialog = New-Object System.Windows.Forms.FolderBrowserDialog
-$dialog.Description = 'Choose where processed image folders will be saved'
-$dialog.ShowNewFolderButton = $true
-if ($env:IMAGE_SEO_INITIAL_FOLDER -and (Test-Path -LiteralPath $env:IMAGE_SEO_INITIAL_FOLDER)) {
-    $dialog.SelectedPath = $env:IMAGE_SEO_INITIAL_FOLDER
-}
-$owner = New-Object System.Windows.Forms.Form
-$owner.TopMost = $true
-$owner.ShowInTaskbar = $false
-if ($dialog.ShowDialog($owner) -eq [System.Windows.Forms.DialogResult]::OK) {
-    Write-Output $dialog.SelectedPath
-}
-$owner.Dispose()
-$dialog.Dispose()
-"""
     picker_environment = os.environ.copy()
     picker_environment["IMAGE_SEO_INITIAL_FOLDER"] = initial_folder
     try:
         completed = subprocess.run(
-            ["powershell.exe", "-NoProfile", "-STA", "-Command", script],
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-STA",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                str(ROOT_DIR / "scripts" / "windows_folder_picker.ps1"),
+            ],
             capture_output=True,
             text=True,
             encoding="utf-8",

@@ -50,6 +50,24 @@ def test_uploaded_batch_saves_one_folder_and_builds_zip(tmp_path: Path) -> None:
         ]
 
 
+def test_blank_prefix_does_not_add_a_brand_to_names(tmp_path: Path) -> None:
+    result = process_uploaded_images(
+        "Testing",
+        tmp_path,
+        [UploadedImage("logo.png", image_bytes(), ImageKind.LOGO)],
+        filename_prefix="",
+    )
+
+    assert result.output_folder.name == "testing"
+    assert [image.output_path.name for image in result.images] == ["testing-logo.png"]
+    assert result.metadata_path.name == "testing-image-seo.csv"
+    with ZipFile(BytesIO(result.zip_data)) as archive:
+        assert archive.namelist() == [
+            "testing/testing-logo.png",
+            "testing/testing-image-seo.csv",
+        ]
+
+
 def test_uploaded_svg_logo_is_included_in_zip(tmp_path: Path) -> None:
     result = process_uploaded_images(
         "SVG Partner",

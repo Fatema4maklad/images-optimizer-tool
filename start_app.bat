@@ -21,6 +21,13 @@ if errorlevel 1 (
     )
 )
 
+".venv\Scripts\python.exe" -c "import socket; s = socket.socket(); s.bind(('127.0.0.1', 8765)); s.close()" >nul 2>&1
+if errorlevel 1 (
+    echo Port 8765 is already in use. Close the previous Image SEO Optimizer window and try again.
+    pause
+    exit /b 1
+)
+
 start "" powershell.exe -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 2; Start-Process 'http://127.0.0.1:8765/?app=image-seo-v6'"
 ".venv\Scripts\python.exe" -m uvicorn app:app --host 127.0.0.1 --port 8765
 endlocal
