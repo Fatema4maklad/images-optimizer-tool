@@ -10,7 +10,13 @@ import app as app_module
 from app import app
 
 
-client = TestClient(app)
+client = TestClient(app, base_url="http://127.0.0.1")
+
+
+def test_local_app_blocks_cross_site_writes_and_untrusted_hosts() -> None:
+    assert client.get("/", headers={"Host": "example.com"}).status_code == 403
+    assert client.post("/api/select-folder", headers={"Origin": "https://example.com"}, json={}).status_code == 403
+    assert client.post("/api/select-folder", headers={"Sec-Fetch-Site": "cross-site"}, json={}).status_code == 403
 
 
 def image_bytes(format_name: str = "PNG", size: tuple[int, int] = (900, 600)) -> bytes:
@@ -31,6 +37,8 @@ def test_normal_web_interface_contains_in_field_previews_and_theme_switch() -> N
     assert 'id="logo-drop-zone"' in response.text
     assert 'class="preview-area"' in response.text
     assert 'data-add="gallery"' in response.text
+    assert 'data-interface-language="ar"' in response.text
+    assert client.get("/i18n/strings.js").status_code == 200
     assert 'id="preview-dialog"' in response.text
     assert "SEO alt text" in response.text
     assert "made by Eng. Fatem ★" in response.text

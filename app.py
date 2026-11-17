@@ -12,17 +12,21 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from image_seo_tool.api import legacy_router, router
+from image_seo_tool.local_security import LocalRequestGate
 from image_seo_tool.version import __version__
 
 
 ROOT_DIR = Path(__file__).resolve().parent
 WEB_DIR = ROOT_DIR / "web"
+SHARED_WEB_DIR = ROOT_DIR / "src" / "image_seo_tool" / "i18n"
 app = FastAPI(
     title="Image SEO Optimizer",
     version=__version__,
     description="Local image optimization API. See /docs for the versioned HTTP contract.",
 )
 app.mount("/assets", StaticFiles(directory=WEB_DIR), name="assets")
+app.mount("/i18n", StaticFiles(directory=SHARED_WEB_DIR), name="i18n")
+app.add_middleware(LocalRequestGate)
 app.include_router(router)
 app.include_router(legacy_router)
 

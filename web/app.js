@@ -9,6 +9,8 @@ const clearAllButton = document.querySelector("#clear-all");
 const statusMessage = document.querySelector("#status-message");
 const altFields = document.querySelector("#alt-fields");
 const resultsDialog = document.querySelector("#results-dialog");
+const t = window.imageSeoI18n.t;
+let lastResult = null;
 
 function formatBytes(bytes) {
   if (!bytes) return "0 B";
@@ -32,11 +34,9 @@ function revokePreviewUrls() {
 }
 
 function previewMarkup(file) {
-  const extension = (file.name.split(".").pop() || "").toLowerCase();
   const url = URL.createObjectURL(file);
   state.urls.push(url);
-  if (extension === "svg") return `<img src="${url}" alt="Preview of ${escapeHtml(file.name)}">`;
-  return `<img src="${url}" alt="Preview of ${escapeHtml(file.name)}">`;
+  return `<img src="${url}" alt="${escapeHtml(t("Preview of {name}", { name: file.name }))}">`;
 }
 
 function renderPreviews() {
@@ -52,10 +52,10 @@ function renderPreviews() {
     if (!files.length) {
       preview.innerHTML = "";
     } else if (kind !== "gallery") {
-      preview.innerHTML = `<div class="single-preview" data-preview-kind="${kind}" data-preview-index="0">${previewMarkup(files[0])}<button class="remove-image" type="button" data-remove-kind="${kind}" data-remove-index="0" aria-label="Remove ${kind}">×</button><span class="file-badge">${escapeHtml(files[0].name)} · ${formatBytes(files[0].size)}</span></div>`;
+      preview.innerHTML = `<div class="single-preview" data-preview-kind="${kind}" data-preview-index="0">${previewMarkup(files[0])}<button class="remove-image" type="button" data-remove-kind="${kind}" data-remove-index="0" aria-label="${escapeHtml(t("Remove {kind}", { kind: t(kind === "logo" ? "Logo" : "Cover") }))}">×</button><span class="file-badge">${escapeHtml(files[0].name)} · ${formatBytes(files[0].size)}</span></div>`;
     } else {
       preview.innerHTML = files.map((file, index) => {
-        return `<div class="gallery-thumb" data-preview-kind="gallery" data-preview-index="${index}">${previewMarkup(file)}<button class="remove-image" type="button" data-remove-kind="gallery" data-remove-index="${index}" aria-label="Remove ${escapeHtml(file.name)}">×</button></div>`;
+        return `<div class="gallery-thumb" data-preview-kind="gallery" data-preview-index="${index}">${previewMarkup(file)}<button class="remove-image" type="button" data-remove-kind="gallery" data-remove-index="${index}" aria-label="${escapeHtml(t("Remove {name}", { name: file.name }))}">×</button></div>`;
       }).join("");
     }
   }
@@ -82,11 +82,11 @@ function altSuggestion(kind, index = 1) {
 function renderAltFields() {
   const previous = new Map([...altFields.querySelectorAll("input")].map(input => [input.id, input.value]));
   const fields = [];
-  if (state.logo.length) fields.push(["logo-alt", "Logo", altSuggestion("logo")]);
-  if (state.cover.length) fields.push(["cover-alt", "Cover", altSuggestion("cover")]);
-  state.gallery.forEach((file, index) => fields.push([`gallery-alt-${index + 1}`, `Gallery ${String(index + 1).padStart(2, "0")}`, altSuggestion("gallery", index + 1)]));
+  if (state.logo.length) fields.push(["logo-alt", t("Logo"), altSuggestion("logo")]);
+  if (state.cover.length) fields.push(["cover-alt", t("Cover"), altSuggestion("cover")]);
+  state.gallery.forEach((file, index) => fields.push([`gallery-alt-${index + 1}`, t("Gallery {number}", { number: String(index + 1).padStart(2, "0") }), altSuggestion("gallery", index + 1)]));
   if (!fields.length) {
-    altFields.innerHTML = '<p class="option-note">Add images to create editable suggestions.</p>';
+    altFields.innerHTML = `<p class="option-note">${t("Add images to create editable suggestions.")}</p>`;
     return;
   }
   altFields.innerHTML = fields.map(([id, label, suggestion]) => {
@@ -101,10 +101,11 @@ function updateFormState() {
   processButton.disabled = !ready;
   clearAllButton.disabled = !hasImages;
   if (!processButton.classList.contains("loading")) {
+    const count = state.logo.length + state.cover.length + state.gallery.length;
     statusMessage.className = "status-message";
     statusMessage.textContent = ready
-      ? `${state.logo.length + state.cover.length + state.gallery.length} image(s) ready to optimize.`
-      : "Choose a folder, enter a name, and add at least one image.";
+      ? t(count === 1 ? "{count} image ready to optimize." : "{count} images ready to optimize.", { count })
+      : t("Choose a folder, enter a name, and add at least one image.");
   }
 }
 
@@ -188,7 +189,7 @@ document.querySelectorAll('input[name="naming_language"]').forEach(input => inpu
 document.querySelector("#browse-button").addEventListener("click", async () => {
   const button = document.querySelector("#browse-button");
   button.disabled = true;
-  button.textContent = "Opening…";
+  button.textContent = t("Opening…");
   try {
     const response = await fetch("/api/select-folder", {
       method: "POST",
@@ -196,15 +197,15 @@ document.querySelector("#browse-button").addEventListener("click", async () => {
       body: JSON.stringify({ initial_folder: outputFolder.value.trim() })
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || "Folder picker could not open.");
+    if (!response.ok) throw new Error(data.detail || t("Folder picker could not open."));
     if (data.path) outputFolder.value = data.path;
     updateFormState();
   } catch (error) {
     statusMessage.className = "status-message error";
-    statusMessage.textContent = error.message;
+    statusMessage.textContent = window.imageSeoI18n.userMessage(error.message, "Folder picker could not open.");
   } finally {
     button.disabled = false;
-    button.textContent = "Browse";
+    button.textContent = t("Browse");
   }
 });
 
@@ -231,40 +232,48 @@ form.addEventListener("submit", async event => {
 
   processButton.disabled = true;
   processButton.classList.add("loading");
-  processButton.querySelector("span").textContent = "Optimizing";
+  processButton.querySelector("span").textContent = t("Optimizing");
   statusMessage.className = "status-message";
-  statusMessage.textContent = "Optimizing and saving your images…";
+  statusMessage.textContent = t("Optimizing and saving your images…");
   try {
     const response = await fetch("/api/v1/process", { method: "POST", body: data });
     const result = await response.json();
-    if (!response.ok) throw new Error(result.detail || "The images could not be processed.");
+    if (!response.ok) throw new Error(result.detail || t("The images could not be processed."));
     showResults(result);
     statusMessage.className = "status-message success";
-    statusMessage.textContent = result.message;
+    statusMessage.textContent = t("Images saved successfully");
   } catch (error) {
     statusMessage.className = "status-message error";
-    statusMessage.textContent = error.message;
+    statusMessage.textContent = window.imageSeoI18n.userMessage(error.message, "The images could not be processed.");
   } finally {
     processButton.classList.remove("loading");
-    processButton.querySelector("span").textContent = "Optimize and save images";
+    processButton.querySelector("span").textContent = t("Optimize and save images");
     updateFormState();
   }
 });
 
 function showResults(result) {
-  document.querySelector("#results-path").textContent = `Saved in ${result.output_folder}`;
+  lastResult = result;
+  document.querySelector("#results-path").textContent = t("Saved in {path}", { path: result.output_folder });
   document.querySelector("#result-metrics").innerHTML = `
-    <div class="metric"><span>Original size</span><strong>${formatBytes(result.original_bytes)}</strong></div>
-    <div class="metric"><span>Optimized size</span><strong>${formatBytes(result.output_bytes)}</strong></div>
-    <div class="metric"><span>Total reduction</span><strong>${result.reduction_percent.toFixed(1)}%</strong></div>`;
+    <div class="metric"><span>${t("Original size")}</span><strong>${formatBytes(result.original_bytes)}</strong></div>
+    <div class="metric"><span>${t("Optimized size")}</span><strong>${formatBytes(result.output_bytes)}</strong></div>
+    <div class="metric"><span>${t("Total reduction")}</span><strong>${result.reduction_percent.toFixed(1)}%</strong></div>`;
   document.querySelector("#results-body").innerHTML = result.images.map(image => `
     <tr><td title="${escapeHtml(image.filename)}">${escapeHtml(image.filename)}</td>
     <td>${image.original_size.join("×")} → ${image.output_size.join("×")}</td>
     <td>${formatBytes(image.original_bytes)}</td><td>${formatBytes(image.output_bytes)}</td>
     <td>${image.reduction_percent.toFixed(1)}%</td></tr>`).join("");
   document.querySelector("#download-button").href = result.download_url;
-  resultsDialog.showModal();
+  if (!resultsDialog.open) resultsDialog.showModal();
 }
+
+document.addEventListener("image-seo:language-change", () => {
+  renderPreviews();
+  if (processButton.classList.contains("loading")) statusMessage.textContent = t("Optimizing and saving your images…");
+  if (lastResult && resultsDialog.open) showResults(lastResult);
+  if (lastResult && resultsDialog.open) statusMessage.textContent = t("Images saved successfully");
+});
 
 function showImagePreview(file, source) {
   if (!file) return;

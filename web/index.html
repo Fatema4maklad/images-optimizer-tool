@@ -3,22 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Image SEO Optimizer</title>
+  <title data-i18n="Image Optimizer">Image Optimizer</title>
   <link rel="stylesheet" href="/assets/styles.css?v=6">
 </head>
 <body>
   <div class="app-shell">
     <header class="site-header">
       <div>
-        <h1>Image SEO Optimizer</h1>
-        <p>Prepare SEO-friendly website images in seconds.</p>
+        <h1 data-i18n="Image Optimizer">Image Optimizer</h1>
+        <p data-i18n="Prepare faster-loading, search-friendly website images in seconds.">Prepare faster-loading, search-friendly website images in seconds.</p>
       </div>
-      <label class="theme-switch" title="Switch light or dark mode">
+      <div class="header-actions">
+      <div class="interface-language" role="group" aria-label="Interface language / لغة الواجهة">
+        <button type="button" data-interface-language="en" aria-pressed="true">English</button>
+        <button type="button" data-interface-language="ar" aria-pressed="false">العربية</button>
+      </div>
+      <label class="theme-switch" title="Switch light or dark mode" data-i18n-title="Switch light or dark mode">
         <span aria-hidden="true">☀</span>
-        <input id="theme-toggle" type="checkbox" aria-label="Dark mode">
+        <input id="theme-toggle" type="checkbox" aria-label="Dark mode" data-i18n-aria="Dark mode">
         <span class="switch-track"><span class="switch-thumb"></span></span>
         <span aria-hidden="true">☾</span>
       </label>
+      </div>
     </header>
 
     <main>
@@ -26,30 +32,30 @@
         <section class="setup-card" aria-labelledby="setup-heading">
           <div class="section-heading">
             <span class="step">1</span>
-            <div><h2 id="setup-heading">Set up your project</h2><p>Choose where to save, then name the project. The project name appears in every filename.</p></div>
+            <div><h2 id="setup-heading" data-i18n="Set up your project">Set up your project</h2><p data-i18n="Choose where to save, then name the project. The project name appears in every filename.">Choose where to save, then name the project. The project name appears in every filename.</p></div>
           </div>
           <div class="setup-grid">
             <label class="field destination-field">
-              <span>Output folder</span>
+              <span data-i18n="Output folder">Output folder</span>
               <div class="input-action">
-                <input id="output-folder" name="output_folder" type="text" placeholder="Choose a destination folder" autocomplete="off" required>
-                <button id="browse-button" class="secondary-button" type="button">Browse</button>
+                <input id="output-folder" name="output_folder" type="text" placeholder="Choose a destination folder" data-i18n-placeholder="Choose a destination folder" autocomplete="off" required>
+                <button id="browse-button" class="secondary-button" type="button" data-i18n="Browse">Browse</button>
               </div>
             </label>
             <label class="field">
-              <span>Project name</span>
-              <input id="entity-name" name="entity_name" type="text" placeholder="e.g. Riyadh Economic Forum" required>
+              <span data-i18n="Project name">Project name</span>
+              <input id="entity-name" name="entity_name" type="text" placeholder="e.g. Riyadh Economic Forum" data-i18n-placeholder="e.g. Riyadh Economic Forum" required>
             </label>
             <fieldset class="language-field">
-              <legend>Filename language</legend>
+              <legend data-i18n="Filename language">Filename language</legend>
               <div class="segmented-control">
                 <label><input type="radio" name="naming_language" value="english" checked><span>English</span></label>
                 <label><input type="radio" name="naming_language" value="arabic"><span>العربية</span></label>
               </div>
             </fieldset>
             <label class="field prefix-field">
-              <span>Filename prefix (optional)</span>
-              <input id="filename-prefix" name="filename_prefix" type="text" placeholder="e.g. my-brand" autocomplete="off">
+              <span data-i18n="Filename prefix (optional)">Filename prefix (optional)</span>
+              <input id="filename-prefix" name="filename_prefix" type="text" placeholder="e.g. my-brand" data-i18n-placeholder="e.g. my-brand" autocomplete="off">
             </label>
           </div>
         </section>
@@ -57,32 +63,32 @@
         <section class="upload-section" aria-labelledby="images-heading">
           <div class="section-heading compact-heading">
             <span class="step">2</span>
-            <div><h2 id="images-heading">Add images</h2><p>PNG, JPG, WebP, or SVG</p></div>
+            <div><h2 id="images-heading" data-i18n="Add images">Add images</h2><p data-i18n="PNG, JPG, WebP, or SVG">PNG, JPG, WebP, or SVG</p></div>
           </div>
           <div class="upload-grid">
             <article class="upload-card" data-upload-card="logo">
-              <div class="card-title"><div><h3>Logo</h3><span>Original format</span></div><div class="card-actions"><button class="add-image" type="button" data-add="logo">Change</button><button class="clear-card" type="button" data-clear="logo" disabled>Clear</button></div></div>
+              <div class="card-title"><div><h3 data-i18n="Logo">Logo</h3><span data-i18n="Original format">Original format</span></div><div class="card-actions"><button class="add-image" type="button" data-add="logo" data-i18n="Change">Change</button><button class="clear-card" type="button" data-clear="logo" data-i18n="Clear" disabled>Clear</button></div></div>
               <div class="drop-zone" id="logo-drop-zone">
                 <input id="logo-input" type="file" accept=".png,.jpg,.jpeg,.webp,.svg,image/*" hidden>
-                <button class="empty-state" type="button" data-add="logo"><span class="upload-icon">↑</span><strong>Drop logo here</strong><small>or click to browse</small></button>
+                <button class="empty-state" type="button" data-add="logo"><span class="upload-icon">↑</span><strong data-i18n="Drop logo here">Drop logo here</strong><small data-i18n="or click to browse">or click to browse</small></button>
                 <div class="preview-area" aria-live="polite"></div>
               </div>
             </article>
 
             <article class="upload-card" data-upload-card="cover">
-              <div class="card-title"><div><h3>Cover</h3><span>Converted to WebP</span></div><div class="card-actions"><button class="add-image" type="button" data-add="cover">Change</button><button class="clear-card" type="button" data-clear="cover" disabled>Clear</button></div></div>
+              <div class="card-title"><div><h3 data-i18n="Cover">Cover</h3><span data-i18n="Converted to WebP">Converted to WebP</span></div><div class="card-actions"><button class="add-image" type="button" data-add="cover" data-i18n="Change">Change</button><button class="clear-card" type="button" data-clear="cover" data-i18n="Clear" disabled>Clear</button></div></div>
               <div class="drop-zone" id="cover-drop-zone">
                 <input id="cover-input" type="file" accept=".png,.jpg,.jpeg,.webp,.svg,image/*" hidden>
-                <button class="empty-state" type="button" data-add="cover"><span class="upload-icon">↑</span><strong>Drop cover here</strong><small>or click to browse</small></button>
+                <button class="empty-state" type="button" data-add="cover"><span class="upload-icon">↑</span><strong data-i18n="Drop cover here">Drop cover here</strong><small data-i18n="or click to browse">or click to browse</small></button>
                 <div class="preview-area" aria-live="polite"></div>
               </div>
             </article>
 
             <article class="upload-card" data-upload-card="gallery">
-              <div class="card-title"><div><h3>Photo gallery</h3><span>Scroll to view all</span></div><div class="card-actions"><button class="add-image" type="button" data-add="gallery">Add more</button><button class="clear-card" type="button" data-clear="gallery" disabled>Clear</button></div></div>
+              <div class="card-title"><div><h3 data-i18n="Photo gallery">Photo gallery</h3><span data-i18n="Scroll to view all">Scroll to view all</span></div><div class="card-actions"><button class="add-image" type="button" data-add="gallery" data-i18n="Add more">Add more</button><button class="clear-card" type="button" data-clear="gallery" data-i18n="Clear" disabled>Clear</button></div></div>
               <div class="drop-zone" id="gallery-drop-zone">
                 <input id="gallery-input" type="file" accept=".png,.jpg,.jpeg,.webp,.svg,image/*" multiple hidden>
-                <button class="empty-state" type="button" data-add="gallery"><span class="upload-icon">↑</span><strong>Drop gallery images here</strong><small>or click to browse</small></button>
+                <button class="empty-state" type="button" data-add="gallery"><span class="upload-icon">↑</span><strong data-i18n="Drop gallery images here">Drop gallery images here</strong><small data-i18n="or click to browse">or click to browse</small></button>
                 <div class="preview-area gallery-preview" aria-live="polite"></div>
               </div>
             </article>
@@ -91,19 +97,19 @@
 
         <section class="options-row">
           <details id="alt-details">
-            <summary>SEO alt text <span>Optional</span></summary>
-            <div id="alt-fields" class="alt-fields"><p class="option-note">Add images to create editable suggestions.</p></div>
+            <summary><span data-i18n="SEO alt text">SEO alt text</span> <span data-i18n="Optional">Optional</span></summary>
+            <div id="alt-fields" class="alt-fields"><p class="option-note" data-i18n="Add images to create editable suggestions.">Add images to create editable suggestions.</p></div>
           </details>
           <details>
-            <summary>Advanced options</summary>
-            <label class="check-field"><input id="overwrite" type="checkbox"><span>Replace files with the same generated name</span></label>
+            <summary data-i18n="Advanced options">Advanced options</summary>
+            <label class="check-field"><input id="overwrite" type="checkbox"><span data-i18n="Replace files with the same generated name">Replace files with the same generated name</span></label>
           </details>
         </section>
 
         <div class="action-bar">
-          <div id="status-message" class="status-message" role="status" aria-live="polite">Choose a folder, enter a name, and add at least one image.</div>
-          <button id="clear-all" class="secondary-button" type="button" disabled>Clear all</button>
-          <button id="process-button" class="primary-button" type="submit" disabled><span>Optimize and save images</span></button>
+          <div id="status-message" class="status-message" role="status" aria-live="polite" data-i18n="Choose a folder, enter a name, and add at least one image.">Choose a folder, enter a name, and add at least one image.</div>
+          <button id="clear-all" class="secondary-button" type="button" data-i18n="Clear all" disabled>Clear all</button>
+          <button id="process-button" class="primary-button" type="submit" disabled><span data-i18n="Optimize and save images">Optimize and save images</span></button>
         </div>
       </form>
     </main>
@@ -114,27 +120,28 @@
   <dialog id="results-dialog">
     <div class="dialog-header">
       <div class="success-mark">✓</div>
-      <div><h2>Images saved successfully</h2><p id="results-path"></p></div>
-      <button id="close-dialog" class="icon-button" type="button" aria-label="Close results">×</button>
+      <div><h2 data-i18n="Images saved successfully">Images saved successfully</h2><p id="results-path"></p></div>
+      <button id="close-dialog" class="icon-button" type="button" aria-label="Close results" data-i18n-aria="Close results">×</button>
     </div>
     <div id="result-metrics" class="result-metrics"></div>
     <div class="results-table-wrap">
-      <table><thead><tr><th>File</th><th>Dimensions</th><th>Before</th><th>After</th><th>Saved</th></tr></thead><tbody id="results-body"></tbody></table>
+      <table><thead><tr><th data-i18n="File">File</th><th data-i18n="Dimensions">Dimensions</th><th data-i18n="Before">Before</th><th data-i18n="After">After</th><th data-i18n="Saved">Saved</th></tr></thead><tbody id="results-body"></tbody></table>
     </div>
     <div class="dialog-actions">
-      <button id="done-button" class="secondary-button" type="button">Done</button>
-      <a id="download-button" class="primary-button" href="#">Download ZIP + SEO data</a>
+      <button id="done-button" class="secondary-button" type="button" data-i18n="Done">Done</button>
+      <a id="download-button" class="primary-button" href="#" data-i18n="Download ZIP + SEO data">Download ZIP + SEO data</a>
     </div>
   </dialog>
 
-  <dialog id="preview-dialog" aria-label="Image preview">
+  <dialog id="preview-dialog" aria-label="Image preview" data-i18n-aria="Image preview">
     <div class="preview-dialog-header">
-      <strong id="preview-title">Image preview</strong>
-      <button id="close-preview" class="icon-button" type="button" aria-label="Close preview">×</button>
+      <strong id="preview-title" data-i18n="Image preview">Image preview</strong>
+      <button id="close-preview" class="icon-button" type="button" aria-label="Close preview" data-i18n-aria="Close preview">×</button>
     </div>
     <div class="large-preview"><img id="large-preview-image" alt="Selected image preview"></div>
   </dialog>
 
-  <script src="/assets/app.js?v=6" defer></script>
+  <script src="/i18n/strings.js" defer></script>
+  <script src="/assets/app.js?v=7" defer></script>
 </body>
 </html>
