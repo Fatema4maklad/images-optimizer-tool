@@ -70,6 +70,13 @@ def test_build_numbered_gallery_filename() -> None:
     )
 
 
+def test_numbered_filename_can_omit_kind_label() -> None:
+    assert build_filename(
+        "Al Riyadh Company", ImageKind.GALLERY, "webp", 3,
+        prefix="My Brand", include_kind_label=False,
+    ) == "my-brand-al-riyadh-company-03.webp"
+
+
 def test_build_filename_normalizes_custom_prefix() -> None:
     assert (
         build_filename(

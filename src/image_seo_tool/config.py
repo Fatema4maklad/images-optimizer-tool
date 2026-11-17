@@ -43,6 +43,7 @@ class ToolConfig:
 
     naming_language: NamingLanguage = NamingLanguage.ENGLISH
     filename_prefix: str = ""
+    include_kind_label: bool = True
     max_pixels: int | None = None
     preserve_original_bytes: bool = True
     labels: Mapping[NamingLanguage, Mapping[ImageKind, str]] = field(
@@ -61,6 +62,8 @@ class ToolConfig:
         language = NamingLanguage(self.naming_language)
         object.__setattr__(self, "naming_language", language)
         object.__setattr__(self, "filename_prefix", slugify_optional_prefix(self.filename_prefix))
+        if not isinstance(self.include_kind_label, bool):
+            raise ValueError("include_kind_label must be a boolean.")
         if self.max_pixels is not None and self.max_pixels < 1:
             raise ValueError("Maximum pixel count must be positive.")
         for kind in ImageKind:

@@ -199,6 +199,7 @@ def optimize_image_bytes(
             language=selected_config.naming_language,
             prefix=selected_config.filename_prefix,
             labels=selected_config.labels[selected_config.naming_language],
+            include_kind_label=selected_config.include_kind_label,
         )
         return filename, image_data, original_size, original_size
 
@@ -255,6 +256,7 @@ def optimize_image_bytes(
         language=selected_config.naming_language,
         prefix=selected_config.filename_prefix,
         labels=selected_config.labels[selected_config.naming_language],
+        include_kind_label=selected_config.include_kind_label,
     )
     return filename, encoded, original_size, output_size
 

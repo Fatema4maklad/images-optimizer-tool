@@ -78,6 +78,7 @@ def build_filename(
     language: NamingLanguage = NamingLanguage.ENGLISH,
     prefix: str = "",
     labels: Mapping[ImageKind, str] | None = None,
+    include_kind_label: bool = True,
 ) -> str:
     """Build a consistent SEO filename for an uploaded image."""
     normalized_extension = extension.lower().lstrip(".")
@@ -86,7 +87,9 @@ def build_filename(
 
     selected_language = NamingLanguage(language)
     selected_labels = labels if labels is not None else IMAGE_KIND_LABELS[selected_language]
-    name_parts = [slugify_name(name), selected_labels[image_kind]]
+    name_parts = [slugify_name(name)]
+    if include_kind_label:
+        name_parts.append(selected_labels[image_kind])
     normalized_prefix = slugify_optional_prefix(prefix)
     if normalized_prefix:
         name_parts.insert(0, normalized_prefix)

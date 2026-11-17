@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="author" content="Fatema Maklad">
+  <meta name="description" content="Optimize images and download clean, project-based filenames.">
+  <title data-i18n="Optimize images">Optimize images</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+  <script src="/i18n/strings.js" defer></script>
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <main class="page">
+    <header class="intro">
+      <div class="interface-language" role="group" aria-label="Interface language / لغة الواجهة">
+        <button type="button" data-interface-language="en" aria-pressed="true">English</button>
+        <button type="button" data-interface-language="ar" aria-pressed="false">العربية</button>
+      </div>
+      <p class="eyebrow" data-i18n="A simple image tool">A simple image tool</p>
+      <h1 data-i18n="Make your images ready to use.">Make your images ready to use.</h1>
+      <p class="lead" data-i18n="Add images, give the project a name, and download lighter WebP files with tidy names.">Add images, give the project a name, and download lighter WebP files with tidy names.</p>
+    </header>
+
+    <form id="optimizer-form" class="panel" novalidate>
+      <div class="section-head"><span class="step">01</span><div><h2 data-i18n="Set up your project">Set up your project</h2><p data-i18n="The project name becomes part of every filename.">The project name becomes part of every filename.</p></div></div>
+      <div class="fields">
+        <label><span data-i18n="Project name">Project name</span> <input id="project-name" name="project_name" type="text" maxlength="120" placeholder="e.g. Riyadh Tech Summit" data-i18n-placeholder="e.g. Riyadh Tech Summit" required autocomplete="off"></label>
+        <label><span data-i18n="Filename prefix">Filename prefix</span> <span class="optional" data-i18n="optional">optional</span><input id="filename-prefix" name="filename_prefix" type="text" maxlength="80" placeholder="e.g. My Brand" data-i18n-placeholder="e.g. My Brand" autocomplete="off"><small data-i18n="Leave blank for names like riyadh-tech-summit-01.webp">Leave blank for names like riyadh-tech-summit-01.webp</small></label>
+        <label><span data-i18n="Filename language">Filename language</span> <select id="naming-language" name="naming_language"><option value="english">English</option><option value="arabic">العربية</option></select></label>
+      </div>
+
+      <div class="section-head second"><span class="step">02</span><div><h2 data-i18n="Add images">Add images</h2><p data-i18n="JPG, PNG, or WebP · up to 12 images · 10 MB each">JPG, PNG, or WebP · up to 12 images · 10 MB each</p></div></div>
+      <div id="drop-zone" class="drop-zone">
+        <input id="image-input" name="images" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple aria-label="Choose images" data-i18n-aria="Choose images">
+        <span class="upload-icon" aria-hidden="true">↑</span>
+        <strong data-i18n="Drop images here or choose files">Drop images here or choose files</strong>
+        <span data-i18n="All your images go into one place.">All your images go into one place.</span>
+      </div>
+      <div id="selected-images" class="selected-images" aria-live="polite"></div>
+      <div class="form-actions"><p id="form-message" role="status" aria-live="polite" data-i18n="Choose a project name and at least one image to start.">Choose a project name and at least one image to start.</p><button id="submit-button" class="button primary" type="submit"><span data-i18n="Optimize images">Optimize images</span> <span aria-hidden="true">→</span></button></div>
+    </form>
+
+    <section id="results" class="results" hidden aria-labelledby="results-title">
+      <div class="results-head"><div><p class="eyebrow" data-i18n="Done and ready">Done and ready</p><h2 id="results-title" data-i18n="Your optimized images">Your optimized images</h2><p id="results-summary"></p></div><a id="download-all" class="button primary" href="#" download data-i18n="Download all as ZIP ↓">Download all as ZIP ↓</a></div>
+      <div id="result-images" class="result-grid"></div>
+    </section>
+
+    <footer data-i18n="✦ Developed by Fatema Maklad">✦ Developed by Fatema Maklad</footer>
+  </main>
+</body>
+</html>

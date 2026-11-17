@@ -220,3 +220,5 @@ __marimo__/
 
 # Generated images
 output/
+.public-storage/
+.pytest-temp/

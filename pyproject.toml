@@ -8,7 +8,7 @@ version = "0.2.0"
 description = "Reusable image optimization and SEO-friendly naming for any project."
 requires-python = ">=3.11"
 dependencies = [
-    "Pillow>=10",
+    "Pillow>=13.0.0",
     "python-slugify>=8",
 ]
 
@@ -22,3 +22,6 @@ dev = ["httpx>=0.27", "pytest>=8", "fastapi>=0.115", "python-multipart>=0.0.9", 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+
+[tool.setuptools.package-data]
+image_seo_tool = ["public_web/*", "i18n/*"]
