@@ -5,6 +5,12 @@ This project records user-visible changes here. Versions are set in
 
 ## Unreleased
 
+- Added English and Arabic interfaces for the local and public tools, with
+  Arabic as the first-run default and a persistent language switch.
+- Added a separate simple upload page with image previews, numbered WebP
+  filenames, individual downloads, and an all-images ZIP.
+- Restricted local browser requests to loopback hosts and same-origin writes.
+- Raised the Pillow minimum to 13.0.0 for current security fixes.
 - Renamed the reusable package to `image_seo_tool` and removed built-in brand
   prefixes. New filenames have no prefix unless one is supplied.
 - Added a project-neutral interface using Times New Roman and an optional

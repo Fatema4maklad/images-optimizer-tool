@@ -1,8 +1,108 @@
-# Image SEO Optimizer
+# محسّن الصور
+
+أداة لتجهيز صور المواقع وتحسين سرعة تحميل الصفحات. تضغط الصور
+وتضبط أبعادها وصيغتها لتقليل حجمها، وتمنحها أسماء واضحة ونصوصًا بديلة مقترحة
+تساعد على تنظيمها وتهيئتها لمحركات البحث. ثم تُنشئ ملف CSV لبيانات الصور وملف
+ZIP للتنزيل. تعمل بالعربية والإنجليزية؛ **العربية هي لغة الواجهة عند التشغيل
+الأول**، ويمكن تغييرها من الزر أعلى الصفحة. لغة الواجهة مستقلة عن لغة أسماء
+الملفات.
+
+## ما الموجود في المشروع؟
+
+| الجزء | الاستخدام |
+| --- | --- |
+| الأداة المحلية | تعمل على جهازك وتحفظ الصور في مجلد تختاره. تدعم الشعار والغلاف ومعرض الصور وملفات SVG. |
+| مكتبة Python | تسمح للمطوّر باستدعاء معالجة الصور مباشرة من نظامه وحفظ النتائج بالطريقة المناسبة له. |
+| واجهة API للخوادم | تسمح لنظام آخر بإرسال الصور من خلفيته باستخدام مفتاح سري، ثم استلام النتائج. |
+| واجهة الرفع المبسطة | تجربة منفصلة لرفع عدة صور في حقل واحد ومعاينتها وتنزيلها منفردة أو في ZIP. لم تُنشر على موقع بعد. |
+
+## تشغيل الأداة المحلية
+
+يلزم Python 3.11 أو أحدث. على Windows، افتح PowerShell داخل مجلد المشروع وشغّل
+الأوامر التالية مرة واحدة:
+
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[web]"
+```
+
+بعد ذلك شغّل `start_app.bat`، وافتح `http://127.0.0.1:8765` إذا لم تُفتح
+الصفحة تلقائيًا. على macOS شغّل `start_app.command`؛ سيُعدّ بيئة العمل في
+التشغيل الأول. إذا لم يسمح النظام بفتحه، نفّذ `chmod +x start_app.command`
+مرة واحدة.
+
+اختر مجلد الحفظ واسم المشروع والصور، ثم اضغط زر التحسين. لا تُضاف أي بادئة
+لأسماء الملفات إلا إذا كتبتها في الحقل الاختياري. أسماء الشعار والغلاف وصور
+المعرض تتبع النوع في الأداة المحلية؛ الواجهة المبسطة تستخدم أسماء مرقّمة مثل
+`sample-project-01.webp` دون نوع الصورة.
+
+## الصور والنتائج
+
+تقبل الأداة المحلية صور JPEG وPNG وWebP وSVG. تحافظ على أبعاد الصورة النسبية
+ولا تكبّر الصور الصغيرة. يبقى ملف SVG بصيغته، ويظل الشعار بصيغته الأصلية،
+بينما يُحوَّل الغلاف وصور المعرض إلى WebP. تقترح الواجهة نصوصًا بديلة بالعربية
+أو الإنجليزية يمكنك تعديلها أو حذفها. يحتوي ملف CSV بصيغة UTF-8 على أسماء
+الصور والنصوص البديلة وأمثلة HTML. تحتاج إلى تفعيل خيار الاستبدال إذا أردت
+الكتابة فوق ملف موجود يحمل الاسم الناتج نفسه.
+
+أقصى أبعاد الشعار 1200 × 1200 بكسل، والغلاف 1920 × 1080، وصور المعرض
+1920 × 1920. الواجهة المبسطة تقبل من صورة واحدة إلى 12 صورة JPEG أو PNG أو
+WebP، بحجم لا يزيد على 10 ميغابايت و20 مليون بكسل للصورة الواحدة.
+
+لتشغيل الاختبارات على Windows بعد تثبيت متطلبات التطوير باستخدام
+`py -3.13 -m pip install -e ".[dev]"`، نفّذ:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+## للمطوّرين
+
+توجد تفاصيل الربط في [دليل التكامل](docs/INTEGRATION.md)، وإعدادات الخادم في
+[دليل واجهة API](docs/HOSTED.md)، وطريقة تشغيل [واجهة الرفع المبسطة](docs/PUBLIC_INTERFACE.md).
+الأداة المحلية ليست خادمًا عامًا؛ واجهة API المنفصلة هي المخصصة للربط من خلفية
+موقع آخر.
+مكتبة Python الأساسية تعالج الصور في الذاكرة وتعيد البيانات الناتجة لكي يحفظها
+النظام الذي يستدعيها في وسائطه أو مخزنه. يمكن تثبيت متطلبات الويب بـ`.[web]`
+أو متطلبات الويب والاختبارات بـ`.[dev]`. راجع أيضًا [مرجع الإعدادات](docs/CONFIGURATION.md)
+و[سجل التغييرات](CHANGELOG.md).
+
+## دليل الوثائق
+
+| الوثيقة | ما توضحه |
+| --- | --- |
+| [دليل التكامل](docs/INTEGRATION.md) | اختيار طريقة الربط مع نظام آخر، واستدعاء مكتبة Python، وحفظ الصور الناتجة. |
+| [واجهة API المحلية](docs/API.md) | طلبات الأداة التي تعمل على جهاز المستخدم واستجاباتها. |
+| [واجهة API للخوادم](docs/HOSTED.md) | تشغيل الخدمة المحمية بمفتاح سري وربطها بخلفية موقع آخر؛ نقطة البداية لاستضافة خدمة التكامل مستقبلًا. |
+| [واجهة الرفع المبسطة](docs/PUBLIC_INTERFACE.md) | تشغيل واجهة الرفع المنفصلة محليًا ومتطلبات اختبارها واستضافتها مستقبلًا. |
+| [مرجع الإعدادات](docs/CONFIGURATION.md) | حدود الملفات والأبعاد والجودة والصيغ وخيارات التسمية والتخزين. |
+| [إجراءات الإصدار](docs/RELEASING.md) | الاختبارات وبناء الحزمة والتحقق منها قبل إصدار نسخة جديدة. |
+| [سجل التغييرات](CHANGELOG.md) | التعديلات التي أُضيفت إلى المشروع عبر الإصدارات. |
+
+## English
+
+# Image Optimizer
+
+There is also a separate [simple public interface](docs/PUBLIC_INTERFACE.md) with
+one image upload field, previews, and individual or ZIP downloads. It uses the
+same processing core and leaves the existing local workflow intact.
 
 A local tool and reusable Python package for preparing website images. It
-resizes and optimizes uploads, gives them readable filenames, suggests alt text,
+reduces image weight to support faster page loads, resizes and converts uploads,
+gives them readable filenames, suggests alt text,
 and creates a CSV and ZIP for publishing. It works with any project name.
+
+## Documentation guide
+
+| Document | What it covers |
+| --- | --- |
+| [Integration guide](docs/INTEGRATION.md) | Choosing an integration path, calling the Python library, and saving results in another system. |
+| [Local API](docs/API.md) | Requests and responses for the tool running on a user's computer. |
+| [Hosted API](docs/HOSTED.md) | Running the token-protected service for backend integrations and planning its future hosting. |
+| [Simple upload interface](docs/PUBLIC_INTERFACE.md) | Running the separate page locally and preparing a future test or public deployment. |
+| [Configuration](docs/CONFIGURATION.md) | File and image limits, quality, formats, naming, and storage settings. |
+| [Release process](docs/RELEASING.md) | Tests, package checks, and steps for a new release. |
+| [Changelog](CHANGELOG.md) | Changes made across project versions. |
 
 ## Output names
 
@@ -20,7 +120,7 @@ output/
 ```
 
 The optional **Filename prefix** field adds your own label to image filenames.
-For example, `My Brand` produces `my-brand-riyadh-tech-summit-cover.webp`.
+For example, `Example Brand` produces `example-brand-riyadh-tech-summit-cover.webp`.
 Spaces and punctuation are normalized for filenames. The project folder and
 SEO CSV keep the project name, so one metadata file tracks images processed in
 the folder. Arabic project names and Arabic filename labels remain readable in
@@ -93,7 +193,7 @@ for asset in result.assets:
     media_library.save(asset.filename, asset.data, content_type=asset.mime_type)
 ```
 
-Pass `ToolConfig(filename_prefix="My Brand")` to add a prefix. The same
+Pass `ToolConfig(filename_prefix="Example Brand")` to add a prefix. The same
 configuration can set filename language, image labels, size limits, quality,
 and output formats. `process_uploaded_images` is the local filesystem and ZIP
 adapter. `process_image_file` and `process_image_set` support local file paths.

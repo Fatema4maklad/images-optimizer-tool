@@ -25,6 +25,7 @@ custom = replace(
 | --- | --- | --- |
 | `naming_language` | `english` | Language of type labels in filenames. |
 | `filename_prefix` | Empty | Optional normalized prefix on image filenames. |
+| `include_kind_label` | `True` | Set to `False` for numbered filenames without logo, cover, or gallery labels. |
 | `labels` | English and Arabic logo, cover, gallery labels | Custom labels by language and image type. |
 | `settings` | See table below | Maximum dimensions and quality by image type. |
 | `target_formats` | Logo original; cover/gallery WebP | Raster output format per type: `original`, `JPEG`, `PNG`, or `WEBP`. |
